@@ -1,8 +1,8 @@
 "use strict";
 
-import SceneryManager from './scenery.es6';
-import ShipManager from './ship-manager.es6';
-import GameContainer from './game-container.es6';
+import SceneryManager from './managers/scenery-manager.es6';
+import ShipManager from './managers/ship-manager.es6';
+import GameContainer from './display_objects/game-container.es6';
 
 const gravity = 0.3, spawnPeriod = 700, pushStrength = -20,
       initialY = 200;

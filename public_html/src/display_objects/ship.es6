@@ -1,6 +1,7 @@
 "use strict";
 
 import Projectile from './projectile.es6';
+import {Direction} from '../util.es6';
 
 const [HEALTH, DIRECTION, accelFactor, dragFactor]
   = [Symbol('HEALTH'), Symbol('DIRECTION'), 0.01, 0.9];
@@ -8,13 +9,7 @@ const [HEALTH, DIRECTION, accelFactor, dragFactor]
 // const [UP, NONE, DOWN] =    <= we probably don't need this
 //         [Symbol('up'), Symbol('none'), Symbol('down')];
 
-export const Direction = {
-    get Up() { return -1; },
-    get None() { return 0; }, //default
-    get Down() { return 1; }
-};
-
-export class Ship extends PIXI.Sprite {
+export default class Ship extends PIXI.Sprite {
   constructor(texture, stats, sceneSize) {
     super(texture);
     //stats contains {damage, speed, health}

@@ -1,6 +1,6 @@
 "use strict";
 
-import {insertClip} from './util.es6';
+import {insertClip} from '../util.es6';
 
 const gravity = 0.045;
 

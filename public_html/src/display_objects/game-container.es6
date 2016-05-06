@@ -1,6 +1,7 @@
 'use strict';
 
 export default class GameContainer extends PIXI.Container {
+
   addChild(child) {
     super.addChild(child);
     this.children.sort(function(a,b) {

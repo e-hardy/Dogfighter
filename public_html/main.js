@@ -46,15 +46,15 @@
 
 	"use strict";
 
-	var _scenery = __webpack_require__(1);
+	var _sceneryManager = __webpack_require__(7);
 
-	var _scenery2 = _interopRequireDefault(_scenery);
+	var _sceneryManager2 = _interopRequireDefault(_sceneryManager);
 
-	var _shipManager = __webpack_require__(2);
+	var _shipManager = __webpack_require__(8);
 
 	var _shipManager2 = _interopRequireDefault(_shipManager);
 
-	var _gameContainer = __webpack_require__(6);
+	var _gameContainer = __webpack_require__(13);
 
 	var _gameContainer2 = _interopRequireDefault(_gameContainer);
 
@@ -94,7 +94,7 @@
 
 	function startGame() {
 
-	  sceneryManager = new _scenery2.default(container, renderer.width, renderer.height);
+	  sceneryManager = new _sceneryManager2.default(container, renderer.width, renderer.height);
 	  shipManager = new _shipManager2.default(container, renderer.width, renderer.height);
 
 	  sceneryManager.loadData(loader.resources["assets/clouds.json"].textures);
@@ -119,7 +119,77 @@
 	}
 
 /***/ },
-/* 1 */
+/* 1 */,
+/* 2 */,
+/* 3 */,
+/* 4 */,
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.intersects = intersects;
+	exports.remove = remove;
+	exports.insertClip = insertClip;
+	var Direction = exports.Direction = {
+	  get Up() {
+	    return -1;
+	  },
+	  get None() {
+	    return 0;
+	  }, //default
+	  get Down() {
+	    return 1;
+	  }
+	};
+
+	function intersects(r1, r2) {
+	  return !(r1.x + r1.width < r2.x || r1.x > r2.x + r2.width || r1.y + r1.height < r2.y || r1.y > r2.y + r2.height);
+	}
+
+	function remove(arr, element) {
+	  arr.splice(arr.indexOf(element), 1);
+	}
+
+	function insertClip(name, container, options, destroyTime) {
+	  //name doesn't include the assets/ part, but does include extension
+	  //options is a set of k/v pairs to be set on the clip object
+	  //if destroyTime is -1, it won't be removed
+	  var loader = PIXI.loader;
+	  var texts = loader.resources["assets/" + name].textures;
+	  var arr = [];
+	  for (var res in texts) {
+	    arr.push(texts[res]);
+	  }
+
+	  var clip = new PIXI.extras.MovieClip(arr);
+
+	  for (var prop in options) {
+	    if (prop === "width") {
+	      var asp = clip.height / clip.width;
+	      clip.width = 600;
+	      clip.height = clip.width * asp;
+	    }
+	    clip[prop] = options[prop];
+	  }
+
+	  container.addChild(clip);
+	  clip.play();
+
+	  if (destroyTime >= 0) {
+	    setTimeout(function () {
+	      clip.parent.removeChild(clip);
+	      clip.destroy();
+	    }, destroyTime);
+	  }
+	}
+
+/***/ },
+/* 6 */,
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -252,7 +322,7 @@
 	exports.default = SceneryManager;
 
 /***/ },
-/* 2 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -263,11 +333,21 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _ship = __webpack_require__(3);
+	var _ship2 = __webpack_require__(9);
 
-	var _projectile = __webpack_require__(4);
+	var _ship3 = _interopRequireDefault(_ship2);
+
+	var _projectile = __webpack_require__(10);
 
 	var _projectile2 = _interopRequireDefault(_projectile);
+
+	var _playerManager = __webpack_require__(11);
+
+	var _playerManager2 = _interopRequireDefault(_playerManager);
+
+	var _enemyManager = __webpack_require__(12);
+
+	var _enemyManager2 = _interopRequireDefault(_enemyManager);
 
 	var _util = __webpack_require__(5);
 
@@ -283,64 +363,23 @@
 	    this.sceneSize = { width: w, height: h };
 	    this.missiles = [];
 	    this.ships = [];
-	    this.initShips();
-	    this.initKeyInputs();
+	    this.playerManager = new _playerManager2.default(this);
+	    this.enemyManager = new _enemyManager2.default(this);
 	  }
 
 	  _createClass(ShipManager, [{
 	    key: 'update',
 	    value: function update(dt) {
-	      this.playerShip.update(dt);
-	      this.enemyShip.update(dt);
-	      if (this.playerShip.firePosition !== null && this.playerShip.firePosition !== undefined) {
-	        this.createMissile(this.playerShip.position.x, this.playerShip.position.x, this.playerShip.team);
-	      }
-	      if (this.enemyShip.firePosition !== null && this.enemyShip.firePosition !== undefined) {
-	        this.createMissile(this.enemyShip.position.x, this.enemyShip.position.x, this.enemyShip.team);
-	      }
 	      var _iteratorNormalCompletion = true;
 	      var _didIteratorError = false;
 	      var _iteratorError = undefined;
 
 	      try {
-	        for (var _iterator = this.missiles[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	          var missile = _step.value;
 
-	          console.log(missile.team, this.playerShip.team);
-	          missile.update(dt);
-	          var exp = false;
-	          var _iteratorNormalCompletion2 = true;
-	          var _didIteratorError2 = false;
-	          var _iteratorError2 = undefined;
+	        for (var _iterator = this.ships[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var _ship = _step.value;
 
-	          try {
-	            for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-	              var ship = _step2.value;
-
-	              if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds())) {
-	                ship.takeDamage(missile.damage);
-	                exp = true;
-	              }
-	            }
-	          } catch (err) {
-	            _didIteratorError2 = true;
-	            _iteratorError2 = err;
-	          } finally {
-	            try {
-	              if (!_iteratorNormalCompletion2 && _iterator2.return) {
-	                _iterator2.return();
-	              }
-	            } finally {
-	              if (_didIteratorError2) {
-	                throw _iteratorError2;
-	              }
-	            }
-	          }
-
-	          if (exp) {
-	            missile.explode();
-	            this.destroyMissile(missile);
-	          }
+	          _ship.update(dt);
 	        }
 	      } catch (err) {
 	        _didIteratorError = true;
@@ -354,6 +393,51 @@
 	          if (_didIteratorError) {
 	            throw _iteratorError;
 	          }
+	        }
+	      }
+
+	      for (var i = 0; i < this.missiles.length; i++) {
+	        var missile = this.missiles[i];
+	        missile.update(dt);
+	        var exp = false;
+	        var _iteratorNormalCompletion2 = true;
+	        var _didIteratorError2 = false;
+	        var _iteratorError2 = undefined;
+
+	        try {
+	          for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	            var ship = _step2.value;
+
+	            if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds())) {
+	              ship.takeDamage(missile.damage);
+	              exp = true;
+	            }
+	          }
+	        } catch (err) {
+	          _didIteratorError2 = true;
+	          _iteratorError2 = err;
+	        } finally {
+	          try {
+	            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	              _iterator2.return();
+	            }
+	          } finally {
+	            if (_didIteratorError2) {
+	              throw _iteratorError2;
+	            }
+	          }
+	        }
+
+	        var sceneRect = {
+	          x: 0, y: 0, width: this.sceneSize.width, height: this.sceneSize.height
+	        };
+	        if (exp) {
+	          missile.explode();
+	          this.destroyMissile(missile);
+	        } else if (!(0, _util.intersects)(missile.getBounds(), sceneRect)) {
+	          this.container.removeChild(missile);
+	          (0, _util.remove)(this.missiles, missile);
+	          i--;
 	        }
 	      }
 	    }
@@ -374,147 +458,6 @@
 	      this.container.removeChild(missile);
 	      missile.destroy();
 	    }
-	  }, {
-	    key: 'initShips',
-	    value: function initShips() {
-	      var _this = this;
-
-	      var st = {
-	        damage: 5,
-	        speed: 1,
-	        health: 20
-	      };
-	      var playerShip = new _ship.Ship(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.sceneSize);
-	      this.playerShip = playerShip;
-	      playerShip.anchor = new PIXI.Point(0, 0.5);
-	      playerShip.position = new PIXI.Point(50, this.sceneSize.height / 2);
-	      this.container.addChild(this.playerShip);
-	      this.playerShip.initHealthBar();
-	      this.playerShip.team = 0;
-	      this.ships.push(this.playerShip);
-
-	      this.container.on('click', function (e) {
-	        if (e.data.originalEvent.offsetX < _this.sceneSize.width / 2) return;
-	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
-	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-	        _this.createMissile(start, end, _this.playerShip.team);
-	      });
-
-	      this.addEnemyShip();
-	    }
-	  }, {
-	    key: 'addEnemyShip',
-	    value: function addEnemyShip() {
-	      var _this2 = this;
-
-	      var st = {
-	        damage: 5,
-	        speed: 1,
-	        health: 20
-	      };
-
-	      var enemyShip = new _ship.Ship(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.sceneSize);
-	      enemyShip.anchor = new PIXI.Point(0, 0.5);
-	      enemyShip.position = new PIXI.Point(this.sceneSize.width - 50, enemyShip.height / -2);
-	      enemyShip.scale.x = -1;
-	      enemyShip.direction = _ship.Direction.Down;
-	      enemyShip.team = 1;
-	      enemyShip.die = function () {
-	        _this2.ships.splice(_this2.ships.indexOf(enemyShip), 1);
-
-	        // // const asp = clip.height / clip.width;
-	        // // clip.width = 600;
-	        // // clip.height = clip.width * asp;
-	        // insertClip("destruction.json", this.container, {
-	        //
-	        // }, 2000);
-	      };
-
-	      this.ships.push(enemyShip);
-	      this.enemyShip = enemyShip;
-	      this.container.addChild(this.enemyShip);
-	      this.enemyShip.initHealthBar();
-
-	      setTimeout(function () {
-	        _this2.setNextEnemyMove();
-	      }, Math.random() * this.sceneSize.height / this.enemyShip.speed);
-	    }
-	  }, {
-	    key: 'setNextEnemyShot',
-	    value: function setNextEnemyShot() {}
-	  }, {
-	    key: 'setNextEnemyMove',
-	    value: function setNextEnemyMove() {
-	      var _this3 = this;
-
-	      if (this.enemyShip.health <= 0) {
-	        this.enemyShip.destroy();
-	        this.addEnemyShip();
-	      } else {
-	        var rand = Math.random() * 10;
-	        if (this.enemyShip.direction === _ship.Direction.Up) {
-	          if (rand <= 3) this.enemyShip.direction = _ship.Direction.None;else this.enemyShip.direction = _ship.Direction.Down;
-	        } else if (this.enemyShip.direction === _ship.Direction.Down) {
-	          if (rand <= 3) this.enemyShip.direction = _ship.Direction.None;else this.enemyShip.direction = _ship.Direction.Up;
-	        } else {
-	          //None
-	          if (rand <= 5) this.enemyShip.direction = _ship.Direction.Down;else this.enemyShip.direction = _ship.Direction.Up;
-	        }
-	        var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
-	        var minInterval = 1000;
-	        if (this.enemyShip.direction === _ship.Direction.Up) {
-	          maxInterval = this.enemyShip.position.y / this.enemyShip.speed;
-	        } else if (this.enemyShip.direction === _ship.Direction.Down) {
-	          maxInterval = (this.sceneSize.height - this.enemyShip.position.y) / this.enemyShip.speed;
-	        } else {
-	          //None
-	          maxInterval = 1000;
-	          minInterval = 500;
-	        }
-	        setTimeout(function () {
-	          _this3.setNextEnemyMove();
-	        }, Math.random() * maxInterval);
-	      }
-	    }
-	  }, {
-	    key: 'initKeyInputs',
-	    value: function initKeyInputs() {
-	      var _this4 = this;
-
-	      this.keyInputStack = [_ship.Direction.None];
-
-	      window.addEventListener("keydown", function (e) {
-	        if (e.code === "KeyQ") {
-	          //move the ship up
-	          if (_this4.keyInputStack.indexOf(_ship.Direction.Up) === -1) {
-	            _this4.keyInputStack.push(_ship.Direction.Up);
-	          }
-	        } else if (e.code === "KeyE") {
-	          //move the ship down
-	          if (_this4.keyInputStack.indexOf(_ship.Direction.Down) === -1) {
-	            _this4.keyInputStack.push(_ship.Direction.Down);
-	          }
-	        } else {
-	          return;
-	        }
-	        _this4.playerShip.direction = _this4.keyInputStack[_this4.keyInputStack.length - 1];
-	      });
-
-	      window.addEventListener("keyup", function (e) {
-	        var ind = 0;
-	        if (e.code === "KeyQ") {
-	          //move the ship up
-	          ind = _this4.keyInputStack.indexOf(_ship.Direction.Up);
-	        } else if (e.code === "KeyE") {
-	          //move the ship down
-	          ind = _this4.keyInputStack.indexOf(_ship.Direction.Down);
-	        } else {
-	          return;
-	        }
-	        _this4.keyInputStack.splice(ind, 1);
-	        _this4.playerShip.direction = _this4.keyInputStack[_this4.keyInputStack.length - 1];
-	      });
-	    }
 	  }]);
 
 	  return ShipManager;
@@ -523,7 +466,7 @@
 	exports.default = ShipManager;
 
 /***/ },
-/* 3 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -531,13 +474,14 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Ship = exports.Direction = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _projectile = __webpack_require__(4);
+	var _projectile = __webpack_require__(10);
 
 	var _projectile2 = _interopRequireDefault(_projectile);
+
+	var _util = __webpack_require__(5);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -555,19 +499,7 @@
 	// const [UP, NONE, DOWN] =    <= we probably don't need this
 	//         [Symbol('up'), Symbol('none'), Symbol('down')];
 
-	var Direction = exports.Direction = {
-	  get Up() {
-	    return -1;
-	  },
-	  get None() {
-	    return 0;
-	  }, //default
-	  get Down() {
-	    return 1;
-	  }
-	};
-
-	var Ship = exports.Ship = function (_PIXI$Sprite) {
+	var Ship = function (_PIXI$Sprite) {
 	  _inherits(Ship, _PIXI$Sprite);
 
 	  function Ship(texture, stats, sceneSize) {
@@ -585,7 +517,7 @@
 	    _this[HEALTH] = stats.health;
 	    _this.maxHealth = stats.health;
 	    _this.velocity = 0;
-	    _this.direction = Direction.None;
+	    _this.direction = _util.Direction.None;
 	    _this.zIndex = 1;
 	    _this.sceneSize = sceneSize;
 	    _this.firePosition = null;
@@ -639,8 +571,10 @@
 	  return Ship;
 	}(PIXI.Sprite);
 
+	exports.default = Ship;
+
 /***/ },
-/* 4 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -735,55 +669,220 @@
 	exports.default = Projectile;
 
 /***/ },
-/* 5 */
-/***/ function(module, exports) {
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.intersects = intersects;
-	exports.insertClip = insertClip;
-	function intersects(r1, r2) {
-	  return !(r1.x + r1.width < r2.x || r1.x > r2.x + r2.width || r1.y + r1.height < r2.y || r1.y > r2.y + r2.height);
-	}
 
-	function insertClip(name, container, options, destroyTime) {
-	  //name doesn't include the assets/ part, but does include extension
-	  //options is a set of k/v pairs to be set on the clip object
-	  //if destroyTime is -1, it won't be removed
-	  var loader = PIXI.loader;
-	  var texts = loader.resources["assets/" + name].textures;
-	  var arr = [];
-	  for (var res in texts) {
-	    arr.push(texts[res]);
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _util = __webpack_require__(5);
+
+	var _ship = __webpack_require__(9);
+
+	var _ship2 = _interopRequireDefault(_ship);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var PlayerManager = function () {
+	  function PlayerManager(shipManager) {
+	    _classCallCheck(this, PlayerManager);
+
+	    this.shipManager = shipManager;
+	    this.initPlayerShip();
+	    this.initKeyInputs();
 	  }
 
-	  var clip = new PIXI.extras.MovieClip(arr);
+	  _createClass(PlayerManager, [{
+	    key: 'initPlayerShip',
+	    value: function initPlayerShip() {
+	      var _this = this;
 
-	  for (var prop in options) {
-	    if (prop === "width") {
-	      var asp = clip.height / clip.width;
-	      clip.width = 600;
-	      clip.height = clip.width * asp;
+	      var st = {
+	        damage: 5,
+	        speed: 1,
+	        health: 20
+	      };
+	      var playerShip = new _ship2.default(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
+	      playerShip.anchor = new PIXI.Point(0, 0.5);
+	      playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
+	      this.playerShip = playerShip;
+	      this.shipManager.container.addChild(this.playerShip);
+	      playerShip.initHealthBar();
+	      playerShip.team = 0;
+	      this.shipManager.ships.push(playerShip);
+
+	      this.shipManager.container.on('click', function (e) {
+	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2) return;
+	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
+	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
+	        _this.shipManager.createMissile(start, end, _this.playerShip.team);
+	      });
 	    }
-	    clip[prop] = options[prop];
-	  }
+	  }, {
+	    key: 'initKeyInputs',
+	    value: function initKeyInputs() {
+	      var _this2 = this;
 
-	  container.addChild(clip);
-	  clip.play();
+	      this.keyInputStack = [_util.Direction.None];
 
-	  if (destroyTime >= 0) {
-	    setTimeout(function () {
-	      clip.parent.removeChild(clip);
-	      clip.destroy();
-	    }, destroyTime);
-	  }
-	}
+	      window.addEventListener("keydown", function (e) {
+	        if (e.code === "KeyQ") {
+	          //move the ship up
+	          if (_this2.keyInputStack.indexOf(_util.Direction.Up) === -1) {
+	            _this2.keyInputStack.push(_util.Direction.Up);
+	          }
+	        } else if (e.code === "KeyE") {
+	          //move the ship down
+	          if (_this2.keyInputStack.indexOf(_util.Direction.Down) === -1) {
+	            _this2.keyInputStack.push(_util.Direction.Down);
+	          }
+	        } else {
+	          return;
+	        }
+	        _this2.playerShip.direction = _this2.keyInputStack[_this2.keyInputStack.length - 1];
+	      });
+
+	      window.addEventListener("keyup", function (e) {
+	        var ind = 0;
+	        if (e.code === "KeyQ") {
+	          //move the ship up
+	          ind = _this2.keyInputStack.indexOf(_util.Direction.Up);
+	        } else if (e.code === "KeyE") {
+	          //move the ship down
+	          ind = _this2.keyInputStack.indexOf(_util.Direction.Down);
+	        } else {
+	          return;
+	        }
+	        _this2.keyInputStack.splice(ind, 1);
+	        _this2.playerShip.direction = _this2.keyInputStack[_this2.keyInputStack.length - 1];
+	      });
+	    }
+	  }]);
+
+	  return PlayerManager;
+	}();
+
+	exports.default = PlayerManager;
 
 /***/ },
-/* 6 */
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _util = __webpack_require__(5);
+
+	var _ship = __webpack_require__(9);
+
+	var _ship2 = _interopRequireDefault(_ship);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var EnemyManager = function () {
+	  function EnemyManager(shipManager) {
+	    _classCallCheck(this, EnemyManager);
+
+	    this.shipManager = shipManager;
+	    this.addEnemyShip();
+	  }
+
+	  _createClass(EnemyManager, [{
+	    key: 'addEnemyShip',
+	    value: function addEnemyShip() {
+	      var _this = this;
+
+	      var st = {
+	        damage: 5,
+	        speed: 1,
+	        health: 20
+	      };
+
+	      var enemyShip = new _ship2.default(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
+	      enemyShip.anchor = new PIXI.Point(0, 0.5);
+	      enemyShip.position = new PIXI.Point(this.shipManager.sceneSize.width - 50, enemyShip.height / -2);
+	      enemyShip.scale.x = -1;
+	      enemyShip.direction = _util.Direction.Down;
+	      enemyShip.team = 1;
+	      enemyShip.die = function () {
+	        _this.shipManager.ships.splice(_this.shipManager.ships.indexOf(enemyShip), 1);
+
+	        // // const asp = clip.height / clip.width;
+	        // // clip.width = 600;
+	        // // clip.height = clip.width * asp;
+	        // insertClip("destruction.json", this.shipManager.container, {
+	        //
+	        // }, 2000);
+	      };
+
+	      this.shipManager.ships.push(enemyShip);
+	      this.shipManager.container.addChild(enemyShip);
+	      enemyShip.initHealthBar();
+
+	      setTimeout(function () {
+	        _this.setNextMove(enemyShip);
+	      }, Math.random() * this.shipManager.sceneSize.height / enemyShip.speed);
+	    }
+	  }, {
+	    key: 'setNextShot',
+	    value: function setNextShot() {}
+	  }, {
+	    key: 'setNextMove',
+	    value: function setNextMove(ship) {
+	      var _this2 = this;
+
+	      if (ship.health <= 0) {
+	        ship.destroy();
+	        this.addEnemyShip();
+	      } else {
+	        var rand = Math.random() * 10;
+	        if (ship.direction === _util.Direction.Up) {
+	          if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Down;
+	        } else if (ship.direction === _util.Direction.Down) {
+	          if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Up;
+	        } else {
+	          //None
+	          if (rand <= 5) ship.direction = _util.Direction.Down;else ship.direction = _util.Direction.Up;
+	        }
+	        var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
+	        var minInterval = 1000;
+	        if (ship.direction === _util.Direction.Up) {
+	          maxInterval = ship.position.y / ship.speed;
+	        } else if (ship.direction === _util.Direction.Down) {
+	          maxInterval = (this.shipManager.sceneSize.height - ship.position.y) / ship.speed;
+	        } else {
+	          //None
+	          maxInterval = 1000;
+	          minInterval = 500;
+	        }
+	        setTimeout(function () {
+	          _this2.setNextMove(ship);
+	        }, Math.random() * maxInterval);
+	      }
+	    }
+	  }]);
+
+	  return EnemyManager;
+	}();
+
+	exports.default = EnemyManager;
+
+/***/ },
+/* 13 */
 /***/ function(module, exports) {
 
 	'use strict';
