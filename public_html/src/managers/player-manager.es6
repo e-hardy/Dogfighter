@@ -19,17 +19,21 @@ export default class PlayerManager {
     const playerShip = new Ship(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
     playerShip.anchor = new PIXI.Point(0, 0.5);
     playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
+    playerShip.width *= 0.7;
+    playerShip.height *= 0.7;
     this.playerShip = playerShip;
     this.shipManager.container.addChild(this.playerShip);
-    playerShip.initHealthBar();
     playerShip.team = 0;
+    playerShip.die = () => {
+      //TODO: implement this!
+    };
     this.shipManager.ships.push(playerShip);
 
     this.shipManager.container.on('click', (e) => {
-      if (e.data.originalEvent.offsetX < this.shipManager.sceneSize.width / 2) return;
+      if (e.data.originalEvent.offsetX < this.shipManager.sceneSize.width / 2 || !this.playerShip.shoot()) return;
       const start = new PIXI.Point(this.playerShip.position.x + this.playerShip.width, this.playerShip.position.y);
       const end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-      this.shipManager.createMissile(start, end, this.playerShip.team);
+      this.shipManager.createMissile(start, end, this.playerShip.team, this.playerShip.missileSpeed);
     });
   }
 

@@ -1,7 +1,7 @@
 "use strict";
 
 import Projectile from './projectile.es6';
-import {Direction} from '../util.es6';
+import {Direction, gameStorage} from '../util.es6';
 
 const [HEALTH, DIRECTION, accelFactor, dragFactor]
   = [Symbol('HEALTH'), Symbol('DIRECTION'), 0.01, 0.9];
@@ -25,22 +25,39 @@ export default class Ship extends PIXI.Sprite {
     this.zIndex = 1;
     this.sceneSize = sceneSize;
     this.firePosition = null;
+    this.missileSpeed = 2;
     this.isEdgeAccelerating = false;
-    //this.initHealthBar();
+    this.initHealthBar();
   }
 
   initHealthBar() {
     const healthBar = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-container.png')),
-          hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png'));
+          hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png')),
+          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-full.png'));
+    this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
+    this.fullText = charge.texture;
     healthBar.addChild(hbFill);
     hbFill.position.x = healthBar.width / 2 - hbFill.width / 2;
     hbFill.position.y = healthBar.height / 2 - hbFill.height / 2;
+    charge.position.x = hbFill.position.x;
+    charge.position.y = healthBar.height;
+    charge.height /= 2;
+    healthBar.addChild(charge);
+    this.chargeBar = charge;
+    this.chargeBar.maxWidth = this.chargeBar.width;
     this.addChild(healthBar);
     healthBar.position.x = this.width / 2 - healthBar.width / 2 - 10;
     healthBar.position.y = 10  - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
     this.hbFill = hbFill;
     this.maxHbWidth = hbFill.texture.width;
-    this.takeDamage(5);
+  }
+
+  shoot() {
+    if (this.chargeBar.width >= this.chargeBar.maxWidth) {
+      this.chargeBar.width = 0.1;
+      return true;
+    }
+    return false;
   }
 
   takeDamage(damage) {
@@ -64,6 +81,11 @@ export default class Ship extends PIXI.Sprite {
     this.position.y += this.velocity * dt;
     if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
     if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
+
+    if (this.chargeBar.width < this.chargeBar.maxWidth) {
+      this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
+      if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
+    }
   }
 
 }

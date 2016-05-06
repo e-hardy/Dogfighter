@@ -24,8 +24,10 @@ loader.add("assets/ship.png");
 loader.add("assets/hp-container.png");
 loader.add("assets/hp-fill.png");
 loader.add("assets/destruction.json");
-loader.add("assets/icon.png");
+loader.add("assets/missile.png");
 loader.add("assets/hit.json");
+loader.add("assets/gauge-fill.png");
+loader.add("assets/gauge-full.png");
 loader.once('complete', startGame);
 loader.load();
 

@@ -46,15 +46,15 @@
 
 	"use strict";
 
-	var _sceneryManager = __webpack_require__(7);
+	var _sceneryManager = __webpack_require__(1);
 
 	var _sceneryManager2 = _interopRequireDefault(_sceneryManager);
 
-	var _shipManager = __webpack_require__(8);
+	var _shipManager = __webpack_require__(2);
 
 	var _shipManager2 = _interopRequireDefault(_shipManager);
 
-	var _gameContainer = __webpack_require__(13);
+	var _gameContainer = __webpack_require__(8);
 
 	var _gameContainer2 = _interopRequireDefault(_gameContainer);
 
@@ -82,8 +82,10 @@
 	loader.add("assets/hp-container.png");
 	loader.add("assets/hp-fill.png");
 	loader.add("assets/destruction.json");
-	loader.add("assets/icon.png");
+	loader.add("assets/missile.png");
 	loader.add("assets/hit.json");
+	loader.add("assets/gauge-fill.png");
+	loader.add("assets/gauge-full.png");
 	loader.once('complete', startGame);
 	loader.load();
 
@@ -119,77 +121,7 @@
 	}
 
 /***/ },
-/* 1 */,
-/* 2 */,
-/* 3 */,
-/* 4 */,
-/* 5 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.intersects = intersects;
-	exports.remove = remove;
-	exports.insertClip = insertClip;
-	var Direction = exports.Direction = {
-	  get Up() {
-	    return -1;
-	  },
-	  get None() {
-	    return 0;
-	  }, //default
-	  get Down() {
-	    return 1;
-	  }
-	};
-
-	function intersects(r1, r2) {
-	  return !(r1.x + r1.width < r2.x || r1.x > r2.x + r2.width || r1.y + r1.height < r2.y || r1.y > r2.y + r2.height);
-	}
-
-	function remove(arr, element) {
-	  arr.splice(arr.indexOf(element), 1);
-	}
-
-	function insertClip(name, container, options, destroyTime) {
-	  //name doesn't include the assets/ part, but does include extension
-	  //options is a set of k/v pairs to be set on the clip object
-	  //if destroyTime is -1, it won't be removed
-	  var loader = PIXI.loader;
-	  var texts = loader.resources["assets/" + name].textures;
-	  var arr = [];
-	  for (var res in texts) {
-	    arr.push(texts[res]);
-	  }
-
-	  var clip = new PIXI.extras.MovieClip(arr);
-
-	  for (var prop in options) {
-	    if (prop === "width") {
-	      var asp = clip.height / clip.width;
-	      clip.width = 600;
-	      clip.height = clip.width * asp;
-	    }
-	    clip[prop] = options[prop];
-	  }
-
-	  container.addChild(clip);
-	  clip.play();
-
-	  if (destroyTime >= 0) {
-	    setTimeout(function () {
-	      clip.parent.removeChild(clip);
-	      clip.destroy();
-	    }, destroyTime);
-	  }
-	}
-
-/***/ },
-/* 6 */,
-/* 7 */
+/* 1 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -322,7 +254,7 @@
 	exports.default = SceneryManager;
 
 /***/ },
-/* 8 */
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -333,19 +265,19 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _ship2 = __webpack_require__(9);
+	var _ship2 = __webpack_require__(3);
 
 	var _ship3 = _interopRequireDefault(_ship2);
 
-	var _projectile = __webpack_require__(10);
+	var _projectile = __webpack_require__(4);
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
-	var _playerManager = __webpack_require__(11);
+	var _playerManager = __webpack_require__(6);
 
 	var _playerManager2 = _interopRequireDefault(_playerManager);
 
-	var _enemyManager = __webpack_require__(12);
+	var _enemyManager = __webpack_require__(7);
 
 	var _enemyManager2 = _interopRequireDefault(_enemyManager);
 
@@ -375,7 +307,6 @@
 	      var _iteratorError = undefined;
 
 	      try {
-
 	        for (var _iterator = this.ships[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	          var _ship = _step.value;
 
@@ -408,7 +339,7 @@
 	          for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 	            var ship = _step2.value;
 
-	            if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds())) {
+	            if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds(), 30)) {
 	              ship.takeDamage(missile.damage);
 	              exp = true;
 	            }
@@ -443,11 +374,20 @@
 	    }
 	  }, {
 	    key: 'createMissile',
-	    value: function createMissile(start, end, team) {
-	      var texture = PIXI.loader.resources["assets/icon.png"].texture;
-	      var angle = Math.atan((end.y - start.y) / (end.x - start.x));
-	      var missile = new _projectile2.default(texture, angle, team, 7, 28);
+	    value: function createMissile(start, heading, team) {
+	      var speed = arguments.length <= 3 || arguments[3] === undefined ? 2 : arguments[3];
+
+	      //heading can either be an endpoint (PIXI.Point) or an angle (Number)
+	      var angle = heading.x === undefined ? heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
+	      var texture = PIXI.loader.resources["assets/missile.png"].texture;
+	      var missile = new _projectile2.default(texture, angle, team, 7, speed);
+	      if (angle > Math.PI / 2) {
+	        missile.scale.x = -1;
+	      }
 	      missile.position = start;
+	      var asp = missile.height / missile.width;
+	      missile.width = 60;
+	      missile.height = asp * missile.width;
 	      this.missiles.push(missile);
 	      this.container.addChild(missile);
 	    }
@@ -466,7 +406,7 @@
 	exports.default = ShipManager;
 
 /***/ },
-/* 9 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -477,7 +417,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _projectile = __webpack_require__(10);
+	var _projectile = __webpack_require__(4);
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
@@ -521,8 +461,9 @@
 	    _this.zIndex = 1;
 	    _this.sceneSize = sceneSize;
 	    _this.firePosition = null;
+	    _this.missileSpeed = 2;
 	    _this.isEdgeAccelerating = false;
-	    //this.initHealthBar();
+	    _this.initHealthBar();
 	    return _this;
 	  }
 
@@ -530,16 +471,33 @@
 	    key: 'initHealthBar',
 	    value: function initHealthBar() {
 	      var healthBar = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-container.png')),
-	          hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png'));
+	          hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png')),
+	          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-full.png'));
+	      this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
+	      this.fullText = charge.texture;
 	      healthBar.addChild(hbFill);
 	      hbFill.position.x = healthBar.width / 2 - hbFill.width / 2;
 	      hbFill.position.y = healthBar.height / 2 - hbFill.height / 2;
+	      charge.position.x = hbFill.position.x;
+	      charge.position.y = healthBar.height;
+	      charge.height /= 2;
+	      healthBar.addChild(charge);
+	      this.chargeBar = charge;
+	      this.chargeBar.maxWidth = this.chargeBar.width;
 	      this.addChild(healthBar);
 	      healthBar.position.x = this.width / 2 - healthBar.width / 2 - 10;
 	      healthBar.position.y = 10 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
 	      this.hbFill = hbFill;
 	      this.maxHbWidth = hbFill.texture.width;
-	      this.takeDamage(5);
+	    }
+	  }, {
+	    key: 'shoot',
+	    value: function shoot() {
+	      if (this.chargeBar.width >= this.chargeBar.maxWidth) {
+	        this.chargeBar.width = 0.1;
+	        return true;
+	      }
+	      return false;
 	    }
 	  }, {
 	    key: 'takeDamage',
@@ -565,6 +523,11 @@
 	      this.position.y += this.velocity * dt;
 	      if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
 	      if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
+
+	      if (this.chargeBar.width < this.chargeBar.maxWidth) {
+	        this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
+	        if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
+	      }
 	    }
 	  }]);
 
@@ -574,7 +537,7 @@
 	exports.default = Ship;
 
 /***/ },
-/* 10 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -593,14 +556,14 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var gravity = 0.045;
+	var _gravity = 0.002;
 
 	var Projectile = function (_PIXI$Sprite) {
 	  _inherits(Projectile, _PIXI$Sprite);
 
 	  function Projectile(texture, angle, team) {
 	    var damage = arguments.length <= 3 || arguments[3] === undefined ? 7 : arguments[3];
-	    var velocity = arguments.length <= 4 || arguments[4] === undefined ? 27 : arguments[4];
+	    var velocity = arguments.length <= 4 || arguments[4] === undefined ? 2 : arguments[4];
 
 	    _classCallCheck(this, Projectile);
 
@@ -618,9 +581,11 @@
 	  _createClass(Projectile, [{
 	    key: "update",
 	    value: function update(dt) {
-	      this.position.x += this.xVelocity;
-	      this.position.y += this.yVelocity;
-	      this.yVelocity += gravity * dt;
+	      this.position.x += this.xVelocity * dt;
+	      this.position.y += this.yVelocity * dt;
+	      this.yVelocity += _gravity * dt;
+	      var angle = Math.atan(this.yVelocity / this.xVelocity);
+	      this.rotation = angle;
 	    }
 	  }, {
 	    key: "explode",
@@ -635,31 +600,11 @@
 	        anchor: new PIXI.Point(0.5, 0.5),
 	        position: new PIXI.Point(this.position.x + 30, this.position.y)
 	      }, 2000);
-
-	      // const loader = PIXI.loader;
-	      //
-	      // console.log(loader.resources["assets/hit.json"]);
-	      // const arr = [];
-	      // for (let res in loader.resources["assets/hit.json"].textures) {
-	      //   arr.push(loader.resources["assets/hit.json"].textures[res]);
-	      // }
-	      //
-	      // const clip = new PIXI.extras.MovieClip(arr);
-	      // clip.zIndex = 5;
-	      // // const asp = clip.height / clip.width;
-	      // // clip.width = 600;
-	      // // clip.height = clip.width * asp;
-	      // clip.animationSpeed = 0.8;
-	      // clip.loop = false;
-	      // clip.anchor = new PIXI.Point(0.5, 0.5);
-	      // clip.position = this.position;
-	      // clip.position.x += 30;
-	      // this.parent.addChild(clip);
-	      // clip.play();
-	      // setTimeout(()=>{
-	      //   clip.parent.removeChild(clip);
-	      //   clip.destroy();
-	      // }, 2000);
+	    }
+	  }], [{
+	    key: "gravity",
+	    value: function gravity() {
+	      return _gravity;
 	    }
 	  }]);
 
@@ -669,7 +614,79 @@
 	exports.default = Projectile;
 
 /***/ },
-/* 11 */
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.intersects = intersects;
+	exports.remove = remove;
+	exports.insertClip = insertClip;
+	var Direction = exports.Direction = {
+	  get Up() {
+	    return -1;
+	  },
+	  get None() {
+	    return 0;
+	  }, //default
+	  get Down() {
+	    return 1;
+	  }
+	};
+
+	function intersects(r1, r2) {
+	  var margin = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+
+	  return !(r1.x + r1.width < r2.x + margin || r1.x + margin > r2.x + r2.width || r1.y + r1.height < r2.y + margin || r1.y + margin > r2.y + r2.height);
+	}
+
+	function remove(arr, element) {
+	  arr.splice(arr.indexOf(element), 1);
+	}
+
+	function insertClip(name, container, options, destroyTime) {
+	  //name doesn't include the assets/ part, but does include extension
+	  //options is a set of k/v pairs to be set on the clip object
+	  //if destroyTime is -1, it won't be removed
+	  var loader = PIXI.loader;
+	  var texts = loader.resources["assets/" + name].textures;
+	  var arr = [];
+	  for (var res in texts) {
+	    arr.push(texts[res]);
+	  }
+
+	  var clip = new PIXI.extras.MovieClip(arr);
+
+	  for (var prop in options) {
+	    if (prop === "width") {
+	      var asp = clip.height / clip.width;
+	      clip[prop] = options[prop];
+	      clip.height = clip.width * asp;
+	    } else if (prop === "height") {
+	      var _asp = clip.width / clip.height;
+	      clip[prop] = options[prop];
+	      clip.width = clip.height * _asp;
+	    } else {
+	      clip[prop] = options[prop];
+	    }
+	  }
+
+	  container.addChild(clip);
+	  clip.play();
+
+	  if (destroyTime >= 0) {
+	    setTimeout(function () {
+	      clip.parent.removeChild(clip);
+	      clip.destroy();
+	    }, destroyTime);
+	  }
+	}
+
+/***/ },
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -682,7 +699,7 @@
 
 	var _util = __webpack_require__(5);
 
-	var _ship = __webpack_require__(9);
+	var _ship = __webpack_require__(3);
 
 	var _ship2 = _interopRequireDefault(_ship);
 
@@ -712,17 +729,21 @@
 	      var playerShip = new _ship2.default(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
 	      playerShip.anchor = new PIXI.Point(0, 0.5);
 	      playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
+	      playerShip.width *= 0.7;
+	      playerShip.height *= 0.7;
 	      this.playerShip = playerShip;
 	      this.shipManager.container.addChild(this.playerShip);
-	      playerShip.initHealthBar();
 	      playerShip.team = 0;
+	      playerShip.die = function () {
+	        //TODO: implement this!
+	      };
 	      this.shipManager.ships.push(playerShip);
 
 	      this.shipManager.container.on('click', function (e) {
-	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2) return;
+	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
 	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
 	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-	        _this.shipManager.createMissile(start, end, _this.playerShip.team);
+	        _this.shipManager.createMissile(start, end, _this.playerShip.team, _this.playerShip.missileSpeed);
 	      });
 	    }
 	  }, {
@@ -772,7 +793,7 @@
 	exports.default = PlayerManager;
 
 /***/ },
-/* 12 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -785,9 +806,13 @@
 
 	var _util = __webpack_require__(5);
 
-	var _ship = __webpack_require__(9);
+	var _ship = __webpack_require__(3);
 
 	var _ship2 = _interopRequireDefault(_ship);
+
+	var _projectile = __webpack_require__(4);
+
+	var _projectile2 = _interopRequireDefault(_projectile);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -812,39 +837,83 @@
 	        health: 20
 	      };
 
-	      var enemyShip = new _ship2.default(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
+	      var text = new PIXI.Texture.fromFrame("assets/ship.png");
+	      var enemyShip = new _ship2.default(text, st, this.shipManager.sceneSize);
+	      enemyShip.width *= -0.7;
+	      enemyShip.height *= 0.7;
 	      enemyShip.anchor = new PIXI.Point(0, 0.5);
 	      enemyShip.position = new PIXI.Point(this.shipManager.sceneSize.width - 50, enemyShip.height / -2);
-	      enemyShip.scale.x = -1;
 	      enemyShip.direction = _util.Direction.Down;
 	      enemyShip.team = 1;
 	      enemyShip.die = function () {
 	        _this.shipManager.ships.splice(_this.shipManager.ships.indexOf(enemyShip), 1);
-
-	        // // const asp = clip.height / clip.width;
-	        // // clip.width = 600;
-	        // // clip.height = clip.width * asp;
-	        // insertClip("destruction.json", this.shipManager.container, {
-	        //
-	        // }, 2000);
+	        (0, _util.insertClip)("destruction.json", _this.shipManager.container, {
+	          width: enemyShip.width * 2.2,
+	          zIndex: 5,
+	          animationSpeed: 0.6,
+	          loop: false,
+	          anchor: new PIXI.Point(0.5, 0.5),
+	          position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
+	        }, 2000);
+	        setTimeout(function () {
+	          _this.shipManager.container.removeChild(enemyShip);
+	          enemyShip.destroy();
+	        }, 125);
 	      };
 
 	      this.shipManager.ships.push(enemyShip);
 	      this.shipManager.container.addChild(enemyShip);
-	      enemyShip.initHealthBar();
 
 	      setTimeout(function () {
 	        _this.setNextMove(enemyShip);
+	        _this.setNextShot(enemyShip);
 	      }, Math.random() * this.shipManager.sceneSize.height / enemyShip.speed);
 	    }
 	  }, {
+	    key: 'shotWillHit',
+	    value: function shotWillHit(angle, shooter, target, start) {
+	      var vx = Math.cos(angle) * shooter.missileSpeed,
+	          vy = Math.sin(angle) * shooter.missileSpeed;
+	      var time = Math.abs((start.x - target.position.x + target.width / 2) / vx);
+	      var heightChange = vy * time + 0.5 * _projectile2.default.gravity() * time * time;
+	      return Math.abs(start.y + heightChange - target.position.y - target.velocity * time) <= 2;
+	    }
+	  }, {
 	    key: 'setNextShot',
-	    value: function setNextShot() {}
+	    value: function setNextShot(ship) {
+	      var _this2 = this;
+
+	      if (ship.parent === null) {
+	        return;
+	      }
+	      var playerShip = this.shipManager.playerManager.playerShip;
+	      var start = new PIXI.Point(ship.position.x - ship.width, ship.position.y);
+	      var angle = void 0,
+	          worked = false;
+	      for (var theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
+	        if (this.shotWillHit(theta, ship, playerShip, start)) {
+	          angle = theta;
+	          worked = true;
+	          break;
+	        }
+	      }
+	      if (ship.shoot() && worked) {
+	        //console.log(angle);
+	        this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.missileSpeed);
+	      }
+	      setTimeout(function () {
+	        _this2.setNextShot(ship);
+	      }, Math.random() * 1000 + 1000);
+	    }
 	  }, {
 	    key: 'setNextMove',
 	    value: function setNextMove(ship) {
-	      var _this2 = this;
+	      var _this3 = this;
 
+	      if (ship.parent === null) {
+	        this.addEnemyShip();
+	        return;
+	      }
 	      if (ship.health <= 0) {
 	        ship.destroy();
 	        this.addEnemyShip();
@@ -870,7 +939,7 @@
 	          minInterval = 500;
 	        }
 	        setTimeout(function () {
-	          _this2.setNextMove(ship);
+	          _this3.setNextMove(ship);
 	        }, Math.random() * maxInterval);
 	      }
 	    }
@@ -882,7 +951,7 @@
 	exports.default = EnemyManager;
 
 /***/ },
-/* 13 */
+/* 8 */
 /***/ function(module, exports) {
 
 	'use strict';

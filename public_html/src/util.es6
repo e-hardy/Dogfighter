@@ -6,8 +6,8 @@ export const Direction = {
     get Down() { return 1; }
 };
 
-export function intersects(r1, r2) {
-  return !(r1.x + r1.width < r2.x || r1.x > r2.x + r2.width || r1.y + r1.height < r2.y || r1.y > r2.y + r2.height);
+export function intersects(r1, r2, margin = 0) {
+  return !(r1.x + r1.width < r2.x + margin || r1.x + margin > r2.x + r2.width || r1.y + r1.height < r2.y + margin || r1.y + margin > r2.y + r2.height);
 }
 
 export function remove(arr, element) {
@@ -30,10 +30,15 @@ export function insertClip(name, container, options, destroyTime) {
   for (let prop in options) {
     if (prop === "width") {
       const asp = clip.height / clip.width;
-      clip.width = 600;
+      clip[prop] = options[prop];
       clip.height = clip.width * asp;
+    } else if (prop === "height") {
+      const asp = clip.width / clip.height;
+      clip[prop] = options[prop];
+      clip.width = clip.height * asp;
+    } else {
+      clip[prop] = options[prop];
     }
-    clip[prop] = options[prop];
   }
 
   container.addChild(clip);

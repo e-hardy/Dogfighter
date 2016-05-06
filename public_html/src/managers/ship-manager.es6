@@ -18,7 +18,6 @@ export default class ShipManager {
   }
 
   update(dt) {
-
     for (let ship of this.ships) {
       ship.update(dt);
     }
@@ -27,7 +26,7 @@ export default class ShipManager {
       missile.update(dt);
       let exp = false;
       for (let ship of this.ships) {
-        if (ship.team !== missile.team && intersects(missile.getBounds(), ship.getBounds())) {
+        if (ship.team !== missile.team && intersects(missile.getBounds(), ship.getBounds(), 30)) {
           ship.takeDamage(missile.damage);
           exp = true;
         }
@@ -46,11 +45,19 @@ export default class ShipManager {
     }
   }
 
-  createMissile(start, end, team) {
-    const texture = PIXI.loader.resources["assets/icon.png"].texture;
-    const angle = Math.atan((end.y - start.y) / (end.x - start.x));
-    const missile = new Projectile(texture, angle, team, 7, 28);
+  createMissile(start, heading, team, speed = 2) {
+    //heading can either be an endpoint (PIXI.Point) or an angle (Number)
+    const angle = (heading.x === undefined) ?
+        heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
+    const texture = PIXI.loader.resources["assets/missile.png"].texture;
+    const missile = new Projectile(texture, angle, team, 7, speed);
+    if (angle > Math.PI / 2) {
+      missile.scale.x = -1;
+    }
     missile.position = start;
+    const asp = missile.height / missile.width;
+    missile.width = 60;
+    missile.height = asp * missile.width;
     this.missiles.push(missile);
     this.container.addChild(missile);
   }
