@@ -1,0 +1,112 @@
+{
+  "frames": {
+    "transClouds0.png": {
+      "frame": {
+        "x": 1,
+        "y": 722,
+        "w": 1668,
+        "h": 472
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1668,
+        "h": 472
+      },
+      "sourceSize": {
+        "w": 1668,
+        "h": 472
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "transClouds1.png": {
+      "frame": {
+        "x": 1,
+        "y": 1196,
+        "w": 1668,
+        "h": 439
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 1,
+        "w": 1668,
+        "h": 439
+      },
+      "sourceSize": {
+        "w": 1668,
+        "h": 440
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "transClouds2.png": {
+      "frame": {
+        "x": 1,
+        "y": 1637,
+        "w": 1668,
+        "h": 384
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 10,
+        "w": 1668,
+        "h": 384
+      },
+      "sourceSize": {
+        "w": 1668,
+        "h": 394
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "transClouds3.png": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 1668,
+        "h": 719
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 6,
+        "w": 1668,
+        "h": 719
+      },
+      "sourceSize": {
+        "w": 1668,
+        "h": 725
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "clouds.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1670,
+      "h": 2025
+    },
+    "scale": "1",
+    "smartupdate": "$TexturePacker:SmartUpdate:7574d3b4b8f337511210f9f7e8e773c8:6cd072a7415c433f5810626dc2aa47f6:04a95f40aafab96dc84c3a1d43f94fb7$"
+  }
+}

@@ -1,0 +1,376 @@
+{
+  "frames": {
+    "flak_hit_01_00000.png": {
+      "frame": {
+        "x": 97,
+        "y": 1555,
+        "w": 85,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 95,
+        "y": 114,
+        "w": 85,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00001.png": {
+      "frame": {
+        "x": 1838,
+        "y": 1445,
+        "w": 165,
+        "h": 147
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 43,
+        "y": 79,
+        "w": 165,
+        "h": 147
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00002.png": {
+      "frame": {
+        "x": 1445,
+        "y": 1031,
+        "w": 202,
+        "h": 181
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 27,
+        "y": 67,
+        "w": 202,
+        "h": 181
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00003.png": {
+      "frame": {
+        "x": 977,
+        "y": 1014,
+        "w": 241,
+        "h": 189
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 10,
+        "y": 67,
+        "w": 241,
+        "h": 189
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00004.png": {
+      "frame": {
+        "x": 534,
+        "y": 1235,
+        "w": 266,
+        "h": 193
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 63,
+        "w": 266,
+        "h": 193
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00005.png": {
+      "frame": {
+        "x": 956,
+        "y": 379,
+        "w": 282,
+        "h": 183
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 59,
+        "w": 282,
+        "h": 183
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00006.png": {
+      "frame": {
+        "x": 976,
+        "y": 1205,
+        "w": 247,
+        "h": 199
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 35,
+        "y": 45,
+        "w": 247,
+        "h": 199
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00007.png": {
+      "frame": {
+        "x": 1496,
+        "y": 466,
+        "w": 241,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 23,
+        "y": 30,
+        "w": 241,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00008.png": {
+      "frame": {
+        "x": 283,
+        "y": 1343,
+        "w": 211,
+        "h": 218
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 60,
+        "y": 14,
+        "w": 211,
+        "h": 218
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00009.png": {
+      "frame": {
+        "x": 1220,
+        "y": 893,
+        "w": 223,
+        "h": 228
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 55,
+        "y": 17,
+        "w": 223,
+        "h": 228
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00010.png": {
+      "frame": {
+        "x": 774,
+        "y": 877,
+        "w": 201,
+        "h": 254
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 89,
+        "y": 2,
+        "w": 201,
+        "h": 254
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00011.png": {
+      "frame": {
+        "x": 1453,
+        "y": 1346,
+        "w": 191,
+        "h": 200
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 97,
+        "y": 56,
+        "w": 191,
+        "h": 200
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00012.png": {
+      "frame": {
+        "x": 1844,
+        "y": 1091,
+        "w": 153,
+        "h": 195
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 89,
+        "y": 56,
+        "w": 153,
+        "h": 195
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00013.png": {
+      "frame": {
+        "x": 1907,
+        "y": 803,
+        "w": 73,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 174,
+        "y": 103,
+        "w": 73,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "flak_hit_01_00014.png": {
+      "frame": {
+        "x": 802,
+        "y": 1346,
+        "w": 72,
+        "h": 38
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 176,
+        "y": 152,
+        "w": 72,
+        "h": 38
+      },
+      "sourceSize": {
+        "w": 303,
+        "h": 256
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "hit.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 2026,
+      "h": 1668
+    },
+    "scale": "1",
+    "smartupdate": "$TexturePacker:SmartUpdate:b34bfce5b2f29781237109866a0ded01:cab14ff90abd48644b40ace32111c4d5:02e632554841d49a6d3ab58ac7d278f2$"
+  }
+}

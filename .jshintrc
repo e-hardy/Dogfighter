@@ -1,0 +1,13 @@
+{
+  "esversion": 6,
+  "predef": [
+    "PIXI",
+    "document",
+    "window",
+    "console",
+    "requestAnimationFrame",
+    "setTimeout"
+  ],
+  "undef": true,
+  "globalstrict": true
+}
