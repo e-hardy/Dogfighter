@@ -5,6 +5,7 @@ import Projectile from '../display_objects/projectile.es6';
 import PlayerManager from './player-manager.es6';
 import EnemyManager from './enemy-manager.es6';
 import {intersects, insertClip, Direction, remove} from '../util.es6';
+import {getStatsForShipType, ShipType} from '../data.es6';
 
 export default class ShipManager {
   constructor(container, w, h) {
@@ -22,20 +23,20 @@ export default class ShipManager {
       ship.update(dt);
     }
     for (let i = 0; i < this.missiles.length; i++) {
+      const shipsHit = [];
       const missile = this.missiles[i];
       missile.update(dt);
-      let exp = false;
       for (let ship of this.ships) {
         if (ship.team !== missile.team && intersects(missile.getBounds(), ship.getBounds(), 30)) {
           ship.takeDamage(missile.damage);
-          exp = true;
+          shipsHit.push(ship);
         }
       }
       const sceneRect = {
         x: 0, y: 0, width: this.sceneSize.width, height: this.sceneSize.height
       };
-      if (exp) {
-        missile.explode();
+      if (shipsHit.length > 0) {
+        missile.explode(shipsHit);
         this.destroyMissile(missile);
       } else if (!intersects(missile.getBounds(), sceneRect)) {
         this.container.removeChild(missile);
@@ -43,6 +44,36 @@ export default class ShipManager {
         i--;
       }
     }
+  }
+
+  createShip(shipType, deathCB) {
+    const stats = getStatsForShipType(shipType);
+    const text = new PIXI.Texture.fromFrame(stats.texturePath);
+    const ship = new Ship(text, stats, this.sceneSize);
+    const [w, h] = [this.sceneSize.width, this.sceneSize.height];
+    if (shipType !== ShipType.Boss) {
+      ship.width *= 0.7;
+      ship.height *= 0.7;
+    }
+    ship.anchor = new PIXI.Point(0, 0.5);
+    if (shipType === ShipType.Player) {
+      ship.direction = Direction.None;
+      ship.team = 0;
+      ship.position = new PIXI.Point(50, h / 2);
+    } else {
+      ship.direction = Direction.Down;
+      ship.team = 1;
+      ship.position = new PIXI.Point(w - 50 - ship.width, ship.height / -2);
+    }
+    ship.die = () => {
+      this.destroyShip(ship);
+      if (deathCB) {
+        deathCB();
+      }
+    };
+    this.ships.push(ship);
+    this.container.addChild(ship);
+    return ship;
   }
 
   destroyShip(ship) {
@@ -53,7 +84,7 @@ export default class ShipManager {
       animationSpeed: 0.6,
       loop: false,
       anchor: new PIXI.Point(0.5, 0.5),
-      position: new PIXI.Point(ship.position.x - ship.width / 2 + 30, ship.position.y - 30)
+      position: new PIXI.Point(ship.position.x + 100, ship.position.y - 30)
     }, 2000);
     setTimeout(() => {
       this.container.removeChild(ship);

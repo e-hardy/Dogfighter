@@ -275,6 +275,8 @@
 
 	var _util = __webpack_require__(5);
 
+	var _data = __webpack_require__(9);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -320,9 +322,9 @@
 	      }
 
 	      for (var i = 0; i < this.missiles.length; i++) {
+	        var shipsHit = [];
 	        var missile = this.missiles[i];
 	        missile.update(dt);
-	        var exp = false;
 	        var _iteratorNormalCompletion2 = true;
 	        var _didIteratorError2 = false;
 	        var _iteratorError2 = undefined;
@@ -333,7 +335,7 @@
 
 	            if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds(), 30)) {
 	              ship.takeDamage(missile.damage);
-	              exp = true;
+	              shipsHit.push(ship);
 	            }
 	          }
 	        } catch (err) {
@@ -354,8 +356,8 @@
 	        var sceneRect = {
 	          x: 0, y: 0, width: this.sceneSize.width, height: this.sceneSize.height
 	        };
-	        if (exp) {
-	          missile.explode();
+	        if (shipsHit.length > 0) {
+	          missile.explode(shipsHit);
 	          this.destroyMissile(missile);
 	        } else if (!(0, _util.intersects)(missile.getBounds(), sceneRect)) {
 	          this.container.removeChild(missile);
@@ -365,9 +367,44 @@
 	      }
 	    }
 	  }, {
+	    key: 'createShip',
+	    value: function createShip(shipType, deathCB) {
+	      var _this = this;
+
+	      var stats = (0, _data.getStatsForShipType)(shipType);
+	      var text = new PIXI.Texture.fromFrame(stats.texturePath);
+	      var ship = new _ship3.default(text, stats, this.sceneSize);
+	      var w = this.sceneSize.width;
+	      var h = this.sceneSize.height;
+
+	      if (shipType !== _data.ShipType.Boss) {
+	        ship.width *= 0.7;
+	        ship.height *= 0.7;
+	      }
+	      ship.anchor = new PIXI.Point(0, 0.5);
+	      if (shipType === _data.ShipType.Player) {
+	        ship.direction = _util.Direction.None;
+	        ship.team = 0;
+	        ship.position = new PIXI.Point(50, h / 2);
+	      } else {
+	        ship.direction = _util.Direction.Down;
+	        ship.team = 1;
+	        ship.position = new PIXI.Point(w - 50 - ship.width, ship.height / -2);
+	      }
+	      ship.die = function () {
+	        _this.destroyShip(ship);
+	        if (deathCB) {
+	          deathCB();
+	        }
+	      };
+	      this.ships.push(ship);
+	      this.container.addChild(ship);
+	      return ship;
+	    }
+	  }, {
 	    key: 'destroyShip',
 	    value: function destroyShip(ship) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      (0, _util.remove)(this.ships, ship);
 	      (0, _util.insertClip)("destruction.json", this.container, {
@@ -376,10 +413,10 @@
 	        animationSpeed: 0.6,
 	        loop: false,
 	        anchor: new PIXI.Point(0.5, 0.5),
-	        position: new PIXI.Point(ship.position.x - ship.width / 2 + 30, ship.position.y - 30)
+	        position: new PIXI.Point(ship.position.x + 100, ship.position.y - 30)
 	      }, 2000);
 	      setTimeout(function () {
-	        _this.container.removeChild(ship);
+	        _this2.container.removeChild(ship);
 	        ship.destroy();
 	      }, 125);
 	    }
@@ -599,17 +636,39 @@
 	    }
 	  }, {
 	    key: "explode",
-	    value: function explode() {
+	    value: function explode(ships) {
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
 
-	      //TODO: does an explosion follow the ship? or stay in air?
+	      try {
+	        for (var _iterator = ships[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var ship = _step.value;
 
-	      (0, _util.insertClip)("hit.json", this.parent, {
-	        zIndex: 5,
-	        animationSpeed: 0.8,
-	        loop: false,
-	        anchor: new PIXI.Point(0.5, 0.5),
-	        position: new PIXI.Point(this.position.x + 30, this.position.y)
-	      }, 2000);
+	          var x = this.position.x + 30 - ship.position.x;
+	          var y = this.position.y - ship.position.y;
+	          (0, _util.insertClip)("hit.json", ship, {
+	            zIndex: 5,
+	            animationSpeed: 0.8,
+	            loop: false,
+	            anchor: new PIXI.Point(0.5, 0.5),
+	            position: new PIXI.Point(x, y)
+	          }, 2000);
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
 	    }
 	  }], [{
 	    key: "gravity",
@@ -689,8 +748,10 @@
 
 	  if (destroyTime >= 0) {
 	    setTimeout(function () {
-	      clip.parent.removeChild(clip);
-	      clip.destroy();
+	      if (clip.parent) {
+	        clip.parent.removeChild(clip);
+	        clip.destroy();
+	      }
 	    }, destroyTime);
 	  }
 	}
@@ -733,19 +794,9 @@
 	    value: function initPlayerShip() {
 	      var _this = this;
 
-	      var st = (0, _data.getStatsForShipType)(_data.ShipType.Player);
-	      var playerShip = new _ship2.default(new PIXI.Texture.fromFrame(st.texturePath), st, this.shipManager.sceneSize);
-	      playerShip.anchor = new PIXI.Point(0, 0.5);
-	      playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
-	      playerShip.width *= 0.7;
-	      playerShip.height *= 0.7;
-	      this.playerShip = playerShip;
-	      this.shipManager.container.addChild(this.playerShip);
-	      playerShip.team = 0;
-	      playerShip.die = function () {
-	        _this.shipManager.destroyShip(playerShip);
-	      };
-	      this.shipManager.ships.push(playerShip);
+	      this.playerShip = this.shipManager.createShip(_data.ShipType.Player, function () {
+	        //TODO: some kind of "YOU LOSE" text / screen
+	      });
 
 	      this.shipManager.container.on('click', function (e) {
 	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
@@ -860,7 +911,7 @@
 	        for (var _iterator = ships[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	          var ship = _step.value;
 
-	          this.addEnemyShip((0, _data.getStatsForShipType)(ship));
+	          this.addEnemyShip(ship);
 	        }
 	      } catch (err) {
 	        _didIteratorError = true;
@@ -881,49 +932,13 @@
 	    }
 	  }, {
 	    key: 'addEnemyShip',
-	    value: function addEnemyShip(_ref) {
+	    value: function addEnemyShip(shipType) {
 	      var _this = this;
 
-	      var damage = _ref.damage;
-	      var speed = _ref.speed;
-	      var health = _ref.health;
-	      var texturePath = _ref.texturePath;
-
-	      var st = {
-	        damage: damage, //5
-	        speed: speed, //1
-	        health: health //20
-	      };
-	      this.numShips++;
-	      var text = new PIXI.Texture.fromFrame(texturePath);
-	      var enemyShip = new _ship2.default(text, st, this.shipManager.sceneSize);
-	      enemyShip.width *= -0.7;
-	      enemyShip.height *= 0.7;
-	      enemyShip.anchor = new PIXI.Point(0, 0.5);
-	      enemyShip.position = new PIXI.Point(this.shipManager.sceneSize.width - 50, enemyShip.height / -2);
-	      enemyShip.direction = _util.Direction.Down;
-	      enemyShip.team = 1;
-	      enemyShip.die = function () {
+	      var enemyShip = this.shipManager.createShip(shipType, function () {
 	        _this.numShips--;
-	        _this.shipManager.destroyShip(enemyShip);
-	        // this.shipManager.ships.splice(this.shipManager.ships.indexOf(enemyShip), 1);
-	        // insertClip("destruction.json", this.shipManager.container, {
-	        //   width: enemyShip.width * 2.2,
-	        //   zIndex: 5,
-	        //   animationSpeed: 0.6,
-	        //   loop: false,
-	        //   anchor: new PIXI.Point(0.5, 0.5),
-	        //   position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
-	        // }, 2000);
-	        // setTimeout(() => {
-	        //   this.shipManager.container.removeChild(enemyShip);
-	        //   enemyShip.destroy();
-	        // }, 125);
-	      };
-
-	      this.shipManager.ships.push(enemyShip);
-	      this.shipManager.container.addChild(enemyShip);
-
+	      });
+	      this.numShips++;
 	      setTimeout(function () {
 	        _this.setNextMove(enemyShip);
 	        _this.setNextShot(enemyShip);
@@ -947,18 +962,17 @@
 	        return;
 	      }
 	      var playerShip = this.shipManager.playerManager.playerShip;
-	      var start = new PIXI.Point(ship.position.x - ship.width, ship.position.y);
+	      var start = new PIXI.Point(ship.position.x, ship.position.y);
 	      var angle = void 0,
 	          worked = false;
 	      for (var theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-	        if (this.shotWillHit(theta, ship, playerShip, start)) {
+	        if (this.shotWillHit(theta, ship, playerShip, ship.position)) {
 	          angle = theta;
 	          worked = true;
 	          break;
 	        }
 	      }
 	      if (ship.shoot() && worked) {
-	        //console.log(angle);
 	        this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
 	      }
 	      setTimeout(function () {
@@ -976,34 +990,29 @@
 	        }
 	        return;
 	      }
-	      if (ship.health <= 0) {
-	        ship.destroy();
-	        this.addEnemyShip();
+	      var rand = Math.random() * 10;
+	      if (ship.direction === _util.Direction.Up) {
+	        if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Down;
+	      } else if (ship.direction === _util.Direction.Down) {
+	        if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Up;
 	      } else {
-	        var rand = Math.random() * 10;
-	        if (ship.direction === _util.Direction.Up) {
-	          if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Down;
-	        } else if (ship.direction === _util.Direction.Down) {
-	          if (rand <= 3) ship.direction = _util.Direction.None;else ship.direction = _util.Direction.Up;
-	        } else {
-	          //None
-	          if (rand <= 5) ship.direction = _util.Direction.Down;else ship.direction = _util.Direction.Up;
-	        }
-	        var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
-	        var minInterval = 1000 / ship.speed; //slower ships should move for longer
-	        if (ship.direction === _util.Direction.Up) {
-	          maxInterval = ship.position.y / ship.speed;
-	        } else if (ship.direction === _util.Direction.Down) {
-	          maxInterval = (this.shipManager.sceneSize.height - ship.position.y) / ship.speed;
-	        } else {
-	          //None
-	          maxInterval = 1000;
-	          minInterval = 500;
-	        }
-	        setTimeout(function () {
-	          _this3.setNextMove(ship);
-	        }, Math.random() * maxInterval);
+	        //None
+	        if (rand <= 5) ship.direction = _util.Direction.Down;else ship.direction = _util.Direction.Up;
 	      }
+	      var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
+	      var minInterval = 1000 / ship.speed; //slower ships should move for longer
+	      if (ship.direction === _util.Direction.Up) {
+	        maxInterval = ship.position.y / ship.speed;
+	      } else if (ship.direction === _util.Direction.Down) {
+	        maxInterval = (this.shipManager.sceneSize.height - ship.position.y) / ship.speed;
+	      } else {
+	        //None
+	        maxInterval = 1000;
+	        minInterval = 500;
+	      }
+	      setTimeout(function () {
+	        _this3.setNextMove(ship);
+	      }, Math.random() * maxInterval);
 	    }
 	  }]);
 
@@ -1114,7 +1123,7 @@
 	  return {
 	    health: stats[0],
 	    speed: stats[1],
-	    damage: 0, //stats[2],
+	    damage: stats[2],
 	    texturePath: 'assets/ships/' + stats[3]
 	  };
 	}
@@ -1130,7 +1139,6 @@
 	  for (var i = 0; i < mult; i++) {
 	    ships = ships.concat(arr);
 	  }
-	  console.log("ind: " + ind + " mult: " + mult + " ships: " + ships + " waveData: " + waveData[ind]);
 	  return ships;
 	}
 

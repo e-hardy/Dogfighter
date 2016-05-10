@@ -50,7 +50,7 @@ export function getStatsForShipType(shipType) {
   return {
     health: stats[0],
     speed: stats[1],
-    damage: 0,//stats[2],
+    damage: stats[2],
     texturePath: 'assets/ships/' + stats[3]
   };
 }
@@ -66,7 +66,6 @@ export function getShipsForWaveNumber(waveNumber) {
   for (let i = 0; i < mult; i++) {
     ships = ships.concat(arr);
   }
-  console.log("ind: " + ind + " mult: " + mult + " ships: " + ships + " waveData: " + waveData[ind]);
   return ships;
 }
 

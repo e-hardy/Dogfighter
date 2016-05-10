@@ -17,47 +17,16 @@ export default class EnemyManager {
   sendNextWave() {
     const ships = getShipsForWaveNumber(this.wave);
     for (let ship of ships) {
-      this.addEnemyShip(getStatsForShipType(ship));
+      this.addEnemyShip(ship);
     }
     this.wave++;
   }
 
-  addEnemyShip({damage, speed, health, texturePath}) {
-    const st = {
-      damage: damage, //5
-      speed: speed, //1
-      health: health //20
-    };
+  addEnemyShip(shipType) {
+    const enemyShip = this.shipManager.createShip(shipType, () => {
+        this.numShips--;
+    });
     this.numShips++;
-    const text = new PIXI.Texture.fromFrame(texturePath);
-    const enemyShip = new Ship(text, st, this.shipManager.sceneSize);
-    enemyShip.width *= -0.7;
-    enemyShip.height *= 0.7;
-    enemyShip.anchor = new PIXI.Point(0, 0.5);
-    enemyShip.position = new PIXI.Point(this.shipManager.sceneSize.width - 50, enemyShip.height / -2);
-    enemyShip.direction = Direction.Down;
-    enemyShip.team = 1;
-    enemyShip.die = () => {
-      this.numShips--;
-      this.shipManager.destroyShip(enemyShip);
-      // this.shipManager.ships.splice(this.shipManager.ships.indexOf(enemyShip), 1);
-      // insertClip("destruction.json", this.shipManager.container, {
-      //   width: enemyShip.width * 2.2,
-      //   zIndex: 5,
-      //   animationSpeed: 0.6,
-      //   loop: false,
-      //   anchor: new PIXI.Point(0.5, 0.5),
-      //   position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
-      // }, 2000);
-      // setTimeout(() => {
-      //   this.shipManager.container.removeChild(enemyShip);
-      //   enemyShip.destroy();
-      // }, 125);
-    };
-
-    this.shipManager.ships.push(enemyShip);
-    this.shipManager.container.addChild(enemyShip);
-
     setTimeout(() => {
       this.setNextMove(enemyShip);
       this.setNextShot(enemyShip);
@@ -77,17 +46,16 @@ export default class EnemyManager {
       return;
     }
     const playerShip = this.shipManager.playerManager.playerShip;
-    const start = new PIXI.Point(ship.position.x - ship.width, ship.position.y);
+    const start = new PIXI.Point(ship.position.x, ship.position.y);
     let angle, worked = false;
     for (let theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-      if (this.shotWillHit(theta, ship, playerShip, start)) {
+      if (this.shotWillHit(theta, ship, playerShip, ship.position)) {
         angle = theta;
         worked = true;
         break;
       }
     }
     if (ship.shoot() && worked) {
-      //console.log(angle);
       this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
     }
     setTimeout(() => {
@@ -102,34 +70,29 @@ export default class EnemyManager {
       }
       return;
     }
-    if (ship.health <= 0) {
-      ship.destroy();
-      this.addEnemyShip();
-    } else {
-      const rand = Math.random() * 10;
-      if (ship.direction === Direction.Up) {
-        if (rand <= 3) ship.direction = Direction.None;
-        else ship.direction = Direction.Down;
-      } else if (ship.direction === Direction.Down) {
-        if (rand <= 3) ship.direction = Direction.None;
-        else ship.direction = Direction.Up;
-      } else { //None
-        if (rand <= 5) ship.direction = Direction.Down;
-        else ship.direction = Direction.Up;
-      }
-      let maxInterval; //in ms; we need to configure this so that the enemy won't stay against a wall
-      let minInterval = 1000 / ship.speed; //slower ships should move for longer
-      if (ship.direction === Direction.Up) {
-        maxInterval = ship.position.y / ship.speed;
-      } else if (ship.direction === Direction.Down) {
-        maxInterval = (this.shipManager.sceneSize.height - ship.position.y) / ship.speed;
-      } else { //None
-        maxInterval = 1000;
-        minInterval = 500;
-      }
-      setTimeout(() => {
-        this.setNextMove(ship);
-      }, Math.random() * maxInterval);
+    const rand = Math.random() * 10;
+    if (ship.direction === Direction.Up) {
+      if (rand <= 3) ship.direction = Direction.None;
+      else ship.direction = Direction.Down;
+    } else if (ship.direction === Direction.Down) {
+      if (rand <= 3) ship.direction = Direction.None;
+      else ship.direction = Direction.Up;
+    } else { //None
+      if (rand <= 5) ship.direction = Direction.Down;
+      else ship.direction = Direction.Up;
     }
+    let maxInterval; //in ms; we need to configure this so that the enemy won't stay against a wall
+    let minInterval = 1000 / ship.speed; //slower ships should move for longer
+    if (ship.direction === Direction.Up) {
+      maxInterval = ship.position.y / ship.speed;
+    } else if (ship.direction === Direction.Down) {
+      maxInterval = (this.shipManager.sceneSize.height - ship.position.y) / ship.speed;
+    } else { //None
+      maxInterval = 1000;
+      minInterval = 500;
+    }
+    setTimeout(() => {
+      this.setNextMove(ship);
+    }, Math.random() * maxInterval);
   }
 }

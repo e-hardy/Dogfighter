@@ -27,17 +27,17 @@ export default class Projectile extends PIXI.Sprite {
     this.rotation = angle;
   }
 
-  explode() {
-
-    //TODO: does an explosion follow the ship? or stay in air?
-
-
-    insertClip("hit.json", this.parent, {
-      zIndex: 5,
-      animationSpeed: 0.8,
-      loop: false,
-      anchor: new PIXI.Point(0.5, 0.5),
-      position: new PIXI.Point(this.position.x + 30, this.position.y)
-    }, 2000);
+  explode(ships) {
+    for (let ship of ships) {
+      const x = this.position.x + 30 - ship.position.x;
+      const y = this.position.y - ship.position.y;
+      insertClip("hit.json", ship, {
+        zIndex: 5,
+        animationSpeed: 0.8,
+        loop: false,
+        anchor: new PIXI.Point(0.5, 0.5),
+        position: new PIXI.Point(x, y)
+      }, 2000);
+    }
   }
 }

@@ -46,8 +46,10 @@ export function insertClip(name, container, options, destroyTime) {
 
   if (destroyTime >= 0) {
     setTimeout(()=>{
-      clip.parent.removeChild(clip);
-      clip.destroy();
+      if (clip.parent) {
+        clip.parent.removeChild(clip);
+        clip.destroy();
+      }
     }, destroyTime);
   }
 }

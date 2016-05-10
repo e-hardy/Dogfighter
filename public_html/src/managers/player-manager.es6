@@ -12,19 +12,10 @@ export default class PlayerManager {
   }
 
   initPlayerShip() {
-    const st = getStatsForShipType(ShipType.Player);
-    const playerShip = new Ship(new PIXI.Texture.fromFrame(st.texturePath), st, this.shipManager.sceneSize);
-    playerShip.anchor = new PIXI.Point(0, 0.5);
-    playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
-    playerShip.width *= 0.7;
-    playerShip.height *= 0.7;
-    this.playerShip = playerShip;
-    this.shipManager.container.addChild(this.playerShip);
-    playerShip.team = 0;
-    playerShip.die = () => {
-      this.shipManager.destroyShip(playerShip);
-    };
-    this.shipManager.ships.push(playerShip);
+
+    this.playerShip = this.shipManager.createShip(ShipType.Player, () => {
+      //TODO: some kind of "YOU LOSE" text / screen
+    });
 
     this.shipManager.container.on('click', (e) => {
       if (e.data.originalEvent.offsetX < this.shipManager.sceneSize.width / 2 || !this.playerShip.shoot()) return;
