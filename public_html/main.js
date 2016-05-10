@@ -58,6 +58,8 @@
 
 	var _gameContainer2 = _interopRequireDefault(_gameContainer);
 
+	var _data = __webpack_require__(9);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var gravity = 0.3,
@@ -76,18 +78,7 @@
 	var container = new _gameContainer2.default();
 	container.interactive = true;
 
-	var loader = PIXI.loader;
-	loader.add("assets/clouds.json");
-	loader.add("assets/ship.png");
-	loader.add("assets/hp-container.png");
-	loader.add("assets/hp-fill.png");
-	loader.add("assets/destruction.json");
-	loader.add("assets/missile.png");
-	loader.add("assets/hit.json");
-	loader.add("assets/gauge-fill.png");
-	loader.add("assets/gauge-full.png");
-	loader.once('complete', startGame);
-	loader.load();
+	var loader = (0, _data.loadTextures)(startGame);
 
 	var sceneryManager = void 0,
 	    shipManager = void 0;
@@ -100,6 +91,7 @@
 	  shipManager = new _shipManager2.default(container, renderer.width, renderer.height);
 
 	  sceneryManager.loadData(loader.resources["assets/clouds.json"].textures);
+
 	  requestAnimationFrame(animate);
 	}
 
@@ -373,14 +365,33 @@
 	      }
 	    }
 	  }, {
+	    key: 'destroyShip',
+	    value: function destroyShip(ship) {
+	      var _this = this;
+
+	      (0, _util.remove)(this.ships, ship);
+	      (0, _util.insertClip)("destruction.json", this.container, {
+	        width: ship.width * 2.2,
+	        zIndex: 5,
+	        animationSpeed: 0.6,
+	        loop: false,
+	        anchor: new PIXI.Point(0.5, 0.5),
+	        position: new PIXI.Point(ship.position.x - ship.width / 2 + 30, ship.position.y - 30)
+	      }, 2000);
+	      setTimeout(function () {
+	        _this.container.removeChild(ship);
+	        ship.destroy();
+	      }, 125);
+	    }
+	  }, {
 	    key: 'createMissile',
-	    value: function createMissile(start, heading, team) {
-	      var speed = arguments.length <= 3 || arguments[3] === undefined ? 2 : arguments[3];
+	    value: function createMissile(start, heading, team, damage) {
+	      var speed = arguments.length <= 4 || arguments[4] === undefined ? 2 : arguments[4];
 
 	      //heading can either be an endpoint (PIXI.Point) or an angle (Number)
 	      var angle = heading.x === undefined ? heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
 	      var texture = PIXI.loader.resources["assets/missile.png"].texture;
-	      var missile = new _projectile2.default(texture, angle, team, 7, speed);
+	      var missile = new _projectile2.default(texture, angle, team, damage, speed);
 	      if (angle > Math.PI / 2) {
 	        missile.scale.x = -1;
 	      }
@@ -561,8 +572,7 @@
 	var Projectile = function (_PIXI$Sprite) {
 	  _inherits(Projectile, _PIXI$Sprite);
 
-	  function Projectile(texture, angle, team) {
-	    var damage = arguments.length <= 3 || arguments[3] === undefined ? 7 : arguments[3];
+	  function Projectile(texture, angle, team, damage) {
 	    var velocity = arguments.length <= 4 || arguments[4] === undefined ? 2 : arguments[4];
 
 	    _classCallCheck(this, Projectile);
@@ -703,6 +713,8 @@
 
 	var _ship2 = _interopRequireDefault(_ship);
 
+	var _data = __webpack_require__(9);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -721,12 +733,8 @@
 	    value: function initPlayerShip() {
 	      var _this = this;
 
-	      var st = {
-	        damage: 5,
-	        speed: 1,
-	        health: 20
-	      };
-	      var playerShip = new _ship2.default(new PIXI.Texture.fromFrame("assets/ship.png"), st, this.shipManager.sceneSize);
+	      var st = (0, _data.getStatsForShipType)(_data.ShipType.Player);
+	      var playerShip = new _ship2.default(new PIXI.Texture.fromFrame(st.texturePath), st, this.shipManager.sceneSize);
 	      playerShip.anchor = new PIXI.Point(0, 0.5);
 	      playerShip.position = new PIXI.Point(50, this.shipManager.sceneSize.height / 2);
 	      playerShip.width *= 0.7;
@@ -735,7 +743,7 @@
 	      this.shipManager.container.addChild(this.playerShip);
 	      playerShip.team = 0;
 	      playerShip.die = function () {
-	        //TODO: implement this!
+	        _this.shipManager.destroyShip(playerShip);
 	      };
 	      this.shipManager.ships.push(playerShip);
 
@@ -743,7 +751,7 @@
 	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
 	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
 	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-	        _this.shipManager.createMissile(start, end, _this.playerShip.team, _this.playerShip.missileSpeed);
+	        _this.shipManager.createMissile(start, end, _this.playerShip.team, _this.playerShip.damage, _this.playerShip.missileSpeed);
 	      });
 	    }
 	  }, {
@@ -778,6 +786,16 @@
 	        } else if (e.code === "KeyE") {
 	          //move the ship down
 	          ind = _this2.keyInputStack.indexOf(_util.Direction.Down);
+	        } else if (e.code === "KeyK") {
+	          //kill all enemies (for debugging -- and feeling badass)
+	          for (var i = 0; i < _this2.shipManager.ships.length; i++) {
+	            var ship = _this2.shipManager.ships[i];
+	            if (ship.team !== _this2.playerShip.team) {
+	              ship.die();
+	              i--;
+	            }
+	          }
+	          return;
 	        } else {
 	          return;
 	        }
@@ -814,6 +832,8 @@
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
+	var _data = __webpack_require__(9);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -823,21 +843,59 @@
 	    _classCallCheck(this, EnemyManager);
 
 	    this.shipManager = shipManager;
-	    this.addEnemyShip();
+	    this.wave = 0;
+	    this.numShips = 0;
+	    this.sendNextWave();
 	  }
 
 	  _createClass(EnemyManager, [{
+	    key: 'sendNextWave',
+	    value: function sendNextWave() {
+	      var ships = (0, _data.getShipsForWaveNumber)(this.wave);
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+
+	      try {
+	        for (var _iterator = ships[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var ship = _step.value;
+
+	          this.addEnemyShip((0, _data.getStatsForShipType)(ship));
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
+
+	      this.wave++;
+	    }
+	  }, {
 	    key: 'addEnemyShip',
-	    value: function addEnemyShip() {
+	    value: function addEnemyShip(_ref) {
 	      var _this = this;
 
-	      var st = {
-	        damage: 5,
-	        speed: 1,
-	        health: 20
-	      };
+	      var damage = _ref.damage;
+	      var speed = _ref.speed;
+	      var health = _ref.health;
+	      var texturePath = _ref.texturePath;
 
-	      var text = new PIXI.Texture.fromFrame("assets/ship.png");
+	      var st = {
+	        damage: damage, //5
+	        speed: speed, //1
+	        health: health //20
+	      };
+	      this.numShips++;
+	      var text = new PIXI.Texture.fromFrame(texturePath);
 	      var enemyShip = new _ship2.default(text, st, this.shipManager.sceneSize);
 	      enemyShip.width *= -0.7;
 	      enemyShip.height *= 0.7;
@@ -846,19 +904,21 @@
 	      enemyShip.direction = _util.Direction.Down;
 	      enemyShip.team = 1;
 	      enemyShip.die = function () {
-	        _this.shipManager.ships.splice(_this.shipManager.ships.indexOf(enemyShip), 1);
-	        (0, _util.insertClip)("destruction.json", _this.shipManager.container, {
-	          width: enemyShip.width * 2.2,
-	          zIndex: 5,
-	          animationSpeed: 0.6,
-	          loop: false,
-	          anchor: new PIXI.Point(0.5, 0.5),
-	          position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
-	        }, 2000);
-	        setTimeout(function () {
-	          _this.shipManager.container.removeChild(enemyShip);
-	          enemyShip.destroy();
-	        }, 125);
+	        _this.numShips--;
+	        _this.shipManager.destroyShip(enemyShip);
+	        // this.shipManager.ships.splice(this.shipManager.ships.indexOf(enemyShip), 1);
+	        // insertClip("destruction.json", this.shipManager.container, {
+	        //   width: enemyShip.width * 2.2,
+	        //   zIndex: 5,
+	        //   animationSpeed: 0.6,
+	        //   loop: false,
+	        //   anchor: new PIXI.Point(0.5, 0.5),
+	        //   position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
+	        // }, 2000);
+	        // setTimeout(() => {
+	        //   this.shipManager.container.removeChild(enemyShip);
+	        //   enemyShip.destroy();
+	        // }, 125);
 	      };
 
 	      this.shipManager.ships.push(enemyShip);
@@ -899,7 +959,7 @@
 	      }
 	      if (ship.shoot() && worked) {
 	        //console.log(angle);
-	        this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.missileSpeed);
+	        this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
 	      }
 	      setTimeout(function () {
 	        _this2.setNextShot(ship);
@@ -911,7 +971,9 @@
 	      var _this3 = this;
 
 	      if (ship.parent === null) {
-	        this.addEnemyShip();
+	        if (this.numShips === 0) {
+	          this.sendNextWave();
+	        }
 	        return;
 	      }
 	      if (ship.health <= 0) {
@@ -928,7 +990,7 @@
 	          if (rand <= 5) ship.direction = _util.Direction.Down;else ship.direction = _util.Direction.Up;
 	        }
 	        var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
-	        var minInterval = 1000;
+	        var minInterval = 1000 / ship.speed; //slower ships should move for longer
 	        if (ship.direction === _util.Direction.Up) {
 	          maxInterval = ship.position.y / ship.speed;
 	        } else if (ship.direction === _util.Direction.Down) {
@@ -995,6 +1057,102 @@
 	}(PIXI.Container);
 
 	exports.default = GameContainer;
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.getStatsForShipType = getStatsForShipType;
+	exports.getShipsForWaveNumber = getShipsForWaveNumber;
+	exports.loadTextures = loadTextures;
+	var ShipType = exports.ShipType = {
+	  get Player() {
+	    return 0;
+	  },
+	  get Grunt() {
+	    return 1;
+	  },
+	  get Brute() {
+	    return 2;
+	  },
+	  get Elite() {
+	    return 3;
+	  },
+	  get Boss() {
+	    return 4;
+	  }
+	};
+
+	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
+
+	function getStatsForShipType(shipType) {
+	  var stats = void 0; // [health, speed, damage, texturePath];
+	  switch (shipType) {
+	    case ShipType.Player:
+	      stats = [50, 1, 9, 'player.png'];
+	      break;
+	    case ShipType.Grunt:
+	      stats = [15, 1.2, 5, 'grunt.png'];
+	      break;
+	    case ShipType.Brute:
+	      stats = [25, 0.8, 12, 'brute.png'];
+	      break;
+	    case ShipType.Elite:
+	      stats = [45, 1.4, 15, 'elite.png'];
+	      break;
+	    case ShipType.Boss:
+	      stats = [200, 0.6, 19, 'boss.png'];
+	      break;
+	    default:
+	      throw new Error('Invalid ship type!', 'data.es6');
+	  }
+	  return {
+	    health: stats[0],
+	    speed: stats[1],
+	    damage: 0, //stats[2],
+	    texturePath: 'assets/ships/' + stats[3]
+	  };
+	}
+
+	function getShipsForWaveNumber(waveNumber) {
+	  //if waveNumber is out of bounds, we loop around to the start and
+	  //being doubling (or tripling, etc) the waves
+	  var len = waveData.length;
+	  var mult = Math.floor(waveNumber / len + 1);
+	  var ind = waveNumber % len;
+	  var arr = waveData[ind];
+	  var ships = [];
+	  for (var i = 0; i < mult; i++) {
+	    ships = ships.concat(arr);
+	  }
+	  console.log("ind: " + ind + " mult: " + mult + " ships: " + ships + " waveData: " + waveData[ind]);
+	  return ships;
+	}
+
+	function loadTextures(cb) {
+	  var loader = PIXI.loader;
+	  loader.add("assets/clouds.json");
+	  loader.add("assets/ships/player.png");
+	  loader.add("assets/ships/grunt.png");
+	  loader.add("assets/ships/brute.png");
+	  loader.add("assets/ships/elite.png");
+	  loader.add("assets/ships/boss.png");
+	  loader.add("assets/hp-container.png");
+	  loader.add("assets/hp-fill.png");
+	  loader.add("assets/destruction.json");
+	  loader.add("assets/missile.png");
+	  loader.add("assets/hit.json");
+	  loader.add("assets/gauge-fill.png");
+	  loader.add("assets/gauge-full.png");
+	  loader.once('complete', cb);
+	  loader.load();
+	  return loader;
+	}
 
 /***/ }
 /******/ ]);

@@ -3,21 +3,33 @@
 import {Direction, insertClip} from '../util.es6';
 import Ship from '../display_objects/ship.es6';
 import Projectile from '../display_objects/projectile.es6';
+import {getStatsForShipType, getShipsForWaveNumber, ShipType} from '../data.es6';
+
 
 export default class EnemyManager {
   constructor(shipManager) {
     this.shipManager = shipManager;
-    this.addEnemyShip();
+    this.wave = 0;
+    this.numShips = 0;
+    this.sendNextWave();
   }
 
-  addEnemyShip() {
-    const st = {
-      damage: 5,
-      speed: 1,
-      health: 20
-    };
+  sendNextWave() {
+    const ships = getShipsForWaveNumber(this.wave);
+    for (let ship of ships) {
+      this.addEnemyShip(getStatsForShipType(ship));
+    }
+    this.wave++;
+  }
 
-    const text = new PIXI.Texture.fromFrame("assets/ship.png");
+  addEnemyShip({damage, speed, health, texturePath}) {
+    const st = {
+      damage: damage, //5
+      speed: speed, //1
+      health: health //20
+    };
+    this.numShips++;
+    const text = new PIXI.Texture.fromFrame(texturePath);
     const enemyShip = new Ship(text, st, this.shipManager.sceneSize);
     enemyShip.width *= -0.7;
     enemyShip.height *= 0.7;
@@ -26,19 +38,21 @@ export default class EnemyManager {
     enemyShip.direction = Direction.Down;
     enemyShip.team = 1;
     enemyShip.die = () => {
-      this.shipManager.ships.splice(this.shipManager.ships.indexOf(enemyShip), 1);
-      insertClip("destruction.json", this.shipManager.container, {
-        width: enemyShip.width * 2.2,
-        zIndex: 5,
-        animationSpeed: 0.6,
-        loop: false,
-        anchor: new PIXI.Point(0.5, 0.5),
-        position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
-      }, 2000);
-      setTimeout(() => {
-        this.shipManager.container.removeChild(enemyShip);
-        enemyShip.destroy();
-      }, 125);
+      this.numShips--;
+      this.shipManager.destroyShip(enemyShip);
+      // this.shipManager.ships.splice(this.shipManager.ships.indexOf(enemyShip), 1);
+      // insertClip("destruction.json", this.shipManager.container, {
+      //   width: enemyShip.width * 2.2,
+      //   zIndex: 5,
+      //   animationSpeed: 0.6,
+      //   loop: false,
+      //   anchor: new PIXI.Point(0.5, 0.5),
+      //   position: new PIXI.Point(enemyShip.position.x - enemyShip.width / 2 + 30, enemyShip.position.y - 30)
+      // }, 2000);
+      // setTimeout(() => {
+      //   this.shipManager.container.removeChild(enemyShip);
+      //   enemyShip.destroy();
+      // }, 125);
     };
 
     this.shipManager.ships.push(enemyShip);
@@ -74,7 +88,7 @@ export default class EnemyManager {
     }
     if (ship.shoot() && worked) {
       //console.log(angle);
-      this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.missileSpeed);
+      this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
     }
     setTimeout(() => {
       this.setNextShot(ship);
@@ -83,7 +97,9 @@ export default class EnemyManager {
 
   setNextMove(ship) {
     if (ship.parent === null) {
-      this.addEnemyShip();
+      if (this.numShips === 0) {
+        this.sendNextWave();
+      }
       return;
     }
     if (ship.health <= 0) {
@@ -102,7 +118,7 @@ export default class EnemyManager {
         else ship.direction = Direction.Up;
       }
       let maxInterval; //in ms; we need to configure this so that the enemy won't stay against a wall
-      let minInterval = 1000;
+      let minInterval = 1000 / ship.speed; //slower ships should move for longer
       if (ship.direction === Direction.Up) {
         maxInterval = ship.position.y / ship.speed;
       } else if (ship.direction === Direction.Down) {

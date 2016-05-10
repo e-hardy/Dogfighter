@@ -5,7 +5,7 @@ import {insertClip} from '../util.es6';
 const gravity = 0.002;
 
 export default class Projectile extends PIXI.Sprite {
-  constructor(texture, angle, team, damage = 7, velocity = 2) {
+  constructor(texture, angle, team, damage, velocity = 2) {
     super(texture);
     this.xVelocity = Math.cos(angle) * velocity;
     this.yVelocity = Math.sin(angle) * velocity;

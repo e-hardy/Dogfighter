@@ -45,12 +45,28 @@ export default class ShipManager {
     }
   }
 
-  createMissile(start, heading, team, speed = 2) {
+  destroyShip(ship) {
+    remove(this.ships, ship);
+    insertClip("destruction.json", this.container, {
+      width: ship.width * 2.2,
+      zIndex: 5,
+      animationSpeed: 0.6,
+      loop: false,
+      anchor: new PIXI.Point(0.5, 0.5),
+      position: new PIXI.Point(ship.position.x - ship.width / 2 + 30, ship.position.y - 30)
+    }, 2000);
+    setTimeout(() => {
+      this.container.removeChild(ship);
+      ship.destroy();
+    }, 125);
+  }
+
+  createMissile(start, heading, team, damage, speed = 2) {
     //heading can either be an endpoint (PIXI.Point) or an angle (Number)
     const angle = (heading.x === undefined) ?
         heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
     const texture = PIXI.loader.resources["assets/missile.png"].texture;
-    const missile = new Projectile(texture, angle, team, 7, speed);
+    const missile = new Projectile(texture, angle, team, damage, speed);
     if (angle > Math.PI / 2) {
       missile.scale.x = -1;
     }

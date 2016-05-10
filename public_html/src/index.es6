@@ -3,6 +3,7 @@
 import SceneryManager from './managers/scenery-manager.es6';
 import ShipManager from './managers/ship-manager.es6';
 import GameContainer from './display_objects/game-container.es6';
+import {loadTextures} from './data.es6';
 
 const gravity = 0.3, spawnPeriod = 700, pushStrength = -20,
       initialY = 200;
@@ -18,18 +19,7 @@ renderer.backgroundColor = 0xe6ffff;
 const container = new GameContainer();
 container.interactive = true;
 
-const loader = PIXI.loader;
-loader.add("assets/clouds.json");
-loader.add("assets/ship.png");
-loader.add("assets/hp-container.png");
-loader.add("assets/hp-fill.png");
-loader.add("assets/destruction.json");
-loader.add("assets/missile.png");
-loader.add("assets/hit.json");
-loader.add("assets/gauge-fill.png");
-loader.add("assets/gauge-full.png");
-loader.once('complete', startGame);
-loader.load();
+const loader = loadTextures(startGame);
 
 let sceneryManager, shipManager;
 
@@ -41,6 +31,7 @@ function startGame() {
   shipManager = new ShipManager(container, renderer.width, renderer.height);
 
  sceneryManager.loadData(loader.resources["assets/clouds.json"].textures);
+
   requestAnimationFrame(animate);
 }
 

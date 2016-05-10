@@ -77,7 +77,7 @@ export default class Ship extends PIXI.Sprite {
       const factor = (this.velocity > 0) ? 1 : -1;
       this.velocity = this.speed * factor;
     }
-
+    
     this.position.y += this.velocity * dt;
     if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
     if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
