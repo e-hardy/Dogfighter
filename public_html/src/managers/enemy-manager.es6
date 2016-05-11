@@ -48,8 +48,10 @@ export default class EnemyManager {
     const playerShip = this.shipManager.playerManager.playerShip;
     const start = new PIXI.Point(ship.position.x, ship.position.y);
     let angle, worked = false;
+    let rand = Math.random() * ship.aimRand * 2 - ship.aimRand;
+    let pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
     for (let theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-      if (this.shotWillHit(theta, ship, playerShip, ship.position)) {
+      if (this.shotWillHit(theta, ship, playerShip, pos)) {
         angle = theta;
         worked = true;
         break;

@@ -54,11 +54,11 @@
 
 	var _shipManager2 = _interopRequireDefault(_shipManager);
 
-	var _gameContainer = __webpack_require__(8);
+	var _gameContainer = __webpack_require__(9);
 
 	var _gameContainer2 = _interopRequireDefault(_gameContainer);
 
-	var _data = __webpack_require__(9);
+	var _data = __webpack_require__(7);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -269,13 +269,13 @@
 
 	var _playerManager2 = _interopRequireDefault(_playerManager);
 
-	var _enemyManager = __webpack_require__(7);
+	var _enemyManager = __webpack_require__(8);
 
 	var _enemyManager2 = _interopRequireDefault(_enemyManager);
 
 	var _util = __webpack_require__(5);
 
-	var _data = __webpack_require__(9);
+	var _data = __webpack_require__(7);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -333,7 +333,8 @@
 	          for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 	            var ship = _step2.value;
 
-	            if (ship.team !== missile.team && (0, _util.intersects)(missile.getBounds(), ship.getBounds(), 30)) {
+	            if (ship.team !== missile.team && (0, _util.intersects)((0, _util.getBounds)(missile), (0, _util.getBounds)(ship), 30)) {
+	              //  if (ship.team !== 0) console.log(missile.getLocalBounds(), missile.position.x, missile.parent, ship.getLocalBounds(), ship.position.x, ship.parent);
 	              ship.takeDamage(missile.damage);
 	              shipsHit.push(ship);
 	            }
@@ -359,7 +360,7 @@
 	        if (shipsHit.length > 0) {
 	          missile.explode(shipsHit);
 	          this.destroyMissile(missile);
-	        } else if (!(0, _util.intersects)(missile.getBounds(), sceneRect)) {
+	        } else if (!(0, _util.intersects)((0, _util.getBounds)(missile), sceneRect)) {
 	          this.container.removeChild(missile);
 	          (0, _util.remove)(this.missiles, missile);
 	          i--;
@@ -471,6 +472,8 @@
 
 	var _util = __webpack_require__(5);
 
+	var _data = __webpack_require__(7);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -481,11 +484,19 @@
 
 	var HEALTH = Symbol('HEALTH');
 	var DIRECTION = Symbol('DIRECTION');
+	var SHIELD = Symbol('SHIELD');
 	var accelFactor = 0.01;
 	var dragFactor = 0.9;
 
 	// const [UP, NONE, DOWN] =    <= we probably don't need this
 	//         [Symbol('up'), Symbol('none'), Symbol('down')];
+
+	function updateBar(bar, dt) {
+	  if (bar.width < bar.maxWidth) {
+	    bar.width += bar.maxWidth / 1000 * dt;
+	    if (bar.width > bar.maxWidth) bar.width = bar.maxWidth;
+	  }
+	}
 
 	var Ship = function (_PIXI$Sprite) {
 	  _inherits(Ship, _PIXI$Sprite);
@@ -504,6 +515,11 @@
 	    _this.damage = stats.damage;
 	    _this[HEALTH] = stats.health;
 	    _this.maxHealth = stats.health;
+	    _this.maxShield = stats.maxShield || 0;
+	    for (var key in stats) {
+	      _this[key] = stats[key];
+	    }
+	    _this[SHIELD] = _this.maxShield;
 	    _this.velocity = 0;
 	    _this.direction = _util.Direction.None;
 	    _this.zIndex = 1;
@@ -534,13 +550,25 @@
 	      this.chargeBar.maxWidth = this.chargeBar.width;
 	      this.addChild(healthBar);
 	      healthBar.position.x = this.width / 2 - healthBar.width / 2 - 10;
-	      healthBar.position.y = 10 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
+	      healthBar.position.y = -10 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
 	      this.hbFill = hbFill;
 	      this.maxHbWidth = hbFill.texture.width;
+
+	      this.shieldBar = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/shield.png'));
+	      this.shieldBar.maxWidth = this.maxShield > 0 ? this.shieldBar.width : 0;
+	      this.shieldBar.width = this.shieldBar.maxWidth;
+	      this.shieldBar.restCount = 0;
+	      this.shieldBar.alpha = 0.6;
+	      this.shieldBar.position.x = hbFill.position.x;
+	      this.shieldBar.position.y = hbFill.position.y;
+	      healthBar.addChild(this.shieldBar);
 	    }
 	  }, {
 	    key: 'shoot',
 	    value: function shoot() {
+	      if (_data.constants.pacifism) {
+	        return false;
+	      }
 	      if (this.chargeBar.width >= this.chargeBar.maxWidth) {
 	        this.chargeBar.width = 0.1;
 	        return true;
@@ -550,12 +578,26 @@
 	  }, {
 	    key: 'takeDamage',
 	    value: function takeDamage(damage) {
+	      if (this.maxShield > 0) {
+	        this[SHIELD] = this.maxShield * this.shieldBar.width / this.maxHbWidth; // this is pretty bad but ehh
+	      }
+
+	      if (this[SHIELD] < damage) {
+	        damage -= this[SHIELD];
+	        this[SHIELD] = 0;
+	      } else {
+	        this[SHIELD] -= damage;
+	        damage = 0;
+	      }
+
 	      this[HEALTH] -= damage;
 	      if (this[HEALTH] <= 0) {
 	        this[HEALTH] = 0;
 	        this.die();
 	      }
 	      this.hbFill.width = this.maxHbWidth * this[HEALTH] / this.maxHealth;
+	      this.shieldBar.width = this.maxHbWidth * this[SHIELD] / this.maxShield;
+	      this.shieldBar.restCount = 0;
 	    }
 	  }, {
 	    key: 'update',
@@ -572,10 +614,22 @@
 	      if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
 	      if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
 
-	      if (this.chargeBar.width < this.chargeBar.maxWidth) {
-	        this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
-	        if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
+	      updateBar(this.chargeBar, dt);
+	      if (this.shieldBar.restCount < _data.constants.shieldDelay) {
+	        this.shieldBar.restCount += dt;
 	      }
+	      if (this.shieldBar.restCount >= _data.constants.shieldDelay) {
+	        updateBar(this.shieldBar, dt);
+	      }
+
+	      // if (this.chargeBar.width < this.chargeBar.maxWidth) {
+	      //   this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
+	      //   if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
+	      // }
+	      // if (this.shieldBar.width < this.shieldBar.maxWidth) {
+	      //   this.shieldBar.width += this.shieldBar.maxWidth / 1000 * dt;
+	      //   if (this.shieldBar.width > this.shieldBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
+	      // }
 	    }
 	  }]);
 
@@ -693,6 +747,7 @@
 	});
 	exports.intersects = intersects;
 	exports.remove = remove;
+	exports.getBounds = getBounds;
 	exports.insertClip = insertClip;
 	var Direction = exports.Direction = {
 	  get Up() {
@@ -714,6 +769,10 @@
 
 	function remove(arr, element) {
 	  arr.splice(arr.indexOf(element), 1);
+	}
+
+	function getBounds(obj) {
+	  return new PIXI.Rectangle(obj.position.x, obj.position.y, obj.width, obj.height);
 	}
 
 	function insertClip(name, container, options, destroyTime) {
@@ -774,7 +833,7 @@
 
 	var _ship2 = _interopRequireDefault(_ship);
 
-	var _data = __webpack_require__(9);
+	var _data = __webpack_require__(7);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -847,6 +906,10 @@
 	            }
 	          }
 	          return;
+	        } else if (e.code === "KeyP") {
+	          //toggle pacifism
+	          _data.constants.pacifism = !_data.constants.pacifism;
+	          return;
 	        } else {
 	          return;
 	        }
@@ -863,6 +926,111 @@
 
 /***/ },
 /* 7 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.getStatsForShipType = getStatsForShipType;
+	exports.getShipsForWaveNumber = getShipsForWaveNumber;
+	exports.loadTextures = loadTextures;
+	var constants = exports.constants = {
+	  shieldRegenRate: 2,
+	  shieldDelay: 3000, //ms
+	  pacifism: false
+	};
+
+	var ShipType = exports.ShipType = {
+	  get Player() {
+	    return 0;
+	  },
+	  get Grunt() {
+	    return 1;
+	  },
+	  get Brute() {
+	    return 2;
+	  },
+	  get Elite() {
+	    return 3;
+	  },
+	  get Boss() {
+	    return 4;
+	  }
+	};
+
+	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
+
+	function getStatsForShipType(shipType) {
+	  var stats = void 0; // [health, speed, damage, texturePath, maxShield, aimRand];
+	  //aimRand is the range (up or down) around the target that the enemy may aim at
+	  switch (shipType) {
+	    case ShipType.Player:
+	      stats = [50, 1, 9, 'player.png', 12];
+	      break;
+	    case ShipType.Grunt:
+	      stats = [15, 1.2, 5, 'grunt.png', 0, 150];
+	      break;
+	    case ShipType.Brute:
+	      stats = [25, 0.8, 12, 'brute.png', 0, 70];
+	      break;
+	    case ShipType.Elite:
+	      stats = [45, 1.4, 15, 'elite.png', 0, 40];
+	      break;
+	    case ShipType.Boss:
+	      stats = [200, 0.6, 25, 'boss.png', 40, 120];
+	      break;
+	    default:
+	      throw new Error('Invalid ship type!', 'data.es6');
+	  }
+	  return {
+	    health: stats[0],
+	    speed: stats[1],
+	    damage: stats[2],
+	    texturePath: 'assets/ships/' + stats[3],
+	    maxShield: stats[4],
+	    aimRand: stats[5]
+	  };
+	}
+
+	function getShipsForWaveNumber(waveNumber) {
+	  //if waveNumber is out of bounds, we loop around to the start and
+	  //being doubling (or tripling, etc) the waves
+	  var len = waveData.length;
+	  var mult = Math.floor(waveNumber / len + 1);
+	  var ind = waveNumber % len;
+	  var arr = waveData[ind];
+	  var ships = [];
+	  for (var i = 0; i < mult; i++) {
+	    ships = ships.concat(arr);
+	  }
+	  return ships;
+	}
+
+	function loadTextures(cb) {
+	  var loader = PIXI.loader;
+	  loader.add("assets/clouds.json");
+	  loader.add("assets/ships/player.png");
+	  loader.add("assets/ships/grunt.png");
+	  loader.add("assets/ships/brute.png");
+	  loader.add("assets/ships/elite.png");
+	  loader.add("assets/ships/boss.png");
+	  loader.add("assets/hp-container.png");
+	  loader.add("assets/hp-fill.png");
+	  loader.add("assets/destruction.json");
+	  loader.add("assets/missile.png");
+	  loader.add("assets/hit.json");
+	  loader.add("assets/gauge-fill.png");
+	  loader.add("assets/gauge-full.png");
+	  loader.add("assets/shield.png");
+	  loader.once('complete', cb);
+	  loader.load();
+	  return loader;
+	}
+
+/***/ },
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -883,7 +1051,7 @@
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
-	var _data = __webpack_require__(9);
+	var _data = __webpack_require__(7);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -965,8 +1133,10 @@
 	      var start = new PIXI.Point(ship.position.x, ship.position.y);
 	      var angle = void 0,
 	          worked = false;
+	      var rand = Math.random() * ship.aimRand * 2 - ship.aimRand;
+	      var pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
 	      for (var theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-	        if (this.shotWillHit(theta, ship, playerShip, ship.position)) {
+	        if (this.shotWillHit(theta, ship, playerShip, pos)) {
 	          angle = theta;
 	          worked = true;
 	          break;
@@ -1022,7 +1192,7 @@
 	exports.default = EnemyManager;
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1066,101 +1236,6 @@
 	}(PIXI.Container);
 
 	exports.default = GameContainer;
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.getStatsForShipType = getStatsForShipType;
-	exports.getShipsForWaveNumber = getShipsForWaveNumber;
-	exports.loadTextures = loadTextures;
-	var ShipType = exports.ShipType = {
-	  get Player() {
-	    return 0;
-	  },
-	  get Grunt() {
-	    return 1;
-	  },
-	  get Brute() {
-	    return 2;
-	  },
-	  get Elite() {
-	    return 3;
-	  },
-	  get Boss() {
-	    return 4;
-	  }
-	};
-
-	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
-
-	function getStatsForShipType(shipType) {
-	  var stats = void 0; // [health, speed, damage, texturePath];
-	  switch (shipType) {
-	    case ShipType.Player:
-	      stats = [50, 1, 9, 'player.png'];
-	      break;
-	    case ShipType.Grunt:
-	      stats = [15, 1.2, 5, 'grunt.png'];
-	      break;
-	    case ShipType.Brute:
-	      stats = [25, 0.8, 12, 'brute.png'];
-	      break;
-	    case ShipType.Elite:
-	      stats = [45, 1.4, 15, 'elite.png'];
-	      break;
-	    case ShipType.Boss:
-	      stats = [200, 0.6, 19, 'boss.png'];
-	      break;
-	    default:
-	      throw new Error('Invalid ship type!', 'data.es6');
-	  }
-	  return {
-	    health: stats[0],
-	    speed: stats[1],
-	    damage: stats[2],
-	    texturePath: 'assets/ships/' + stats[3]
-	  };
-	}
-
-	function getShipsForWaveNumber(waveNumber) {
-	  //if waveNumber is out of bounds, we loop around to the start and
-	  //being doubling (or tripling, etc) the waves
-	  var len = waveData.length;
-	  var mult = Math.floor(waveNumber / len + 1);
-	  var ind = waveNumber % len;
-	  var arr = waveData[ind];
-	  var ships = [];
-	  for (var i = 0; i < mult; i++) {
-	    ships = ships.concat(arr);
-	  }
-	  return ships;
-	}
-
-	function loadTextures(cb) {
-	  var loader = PIXI.loader;
-	  loader.add("assets/clouds.json");
-	  loader.add("assets/ships/player.png");
-	  loader.add("assets/ships/grunt.png");
-	  loader.add("assets/ships/brute.png");
-	  loader.add("assets/ships/elite.png");
-	  loader.add("assets/ships/boss.png");
-	  loader.add("assets/hp-container.png");
-	  loader.add("assets/hp-fill.png");
-	  loader.add("assets/destruction.json");
-	  loader.add("assets/missile.png");
-	  loader.add("assets/hit.json");
-	  loader.add("assets/gauge-fill.png");
-	  loader.add("assets/gauge-full.png");
-	  loader.once('complete', cb);
-	  loader.load();
-	  return loader;
-	}
 
 /***/ }
 /******/ ]);

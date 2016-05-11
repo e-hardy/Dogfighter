@@ -1,5 +1,11 @@
 'use strict';
 
+export const constants = {
+  shieldRegenRate: 2,
+  shieldDelay: 3000, //ms
+  pacifism: false
+};
+
 export const ShipType = {
     get Player() {
       return 0;
@@ -27,22 +33,23 @@ const waveData = [
 ];
 
 export function getStatsForShipType(shipType) {
-  let stats;// [health, speed, damage, texturePath];
+  let stats;// [health, speed, damage, texturePath, maxShield, aimRand];
+  //aimRand is the range (up or down) around the target that the enemy may aim at
   switch (shipType) {
     case ShipType.Player:
-      stats  = [50, 1, 9, 'player.png'];
+      stats  = [50, 1, 9, 'player.png', 12];
       break;
     case ShipType.Grunt:
-      stats  = [15, 1.2, 5, 'grunt.png'];
+      stats  = [15, 1.2, 5, 'grunt.png', 0, 150];
       break;
     case ShipType.Brute:
-      stats  = [25, 0.8, 12, 'brute.png'];
+      stats  = [25, 0.8, 12, 'brute.png', 0, 70];
       break;
     case ShipType.Elite:
-      stats  = [45, 1.4, 15, 'elite.png'];
+      stats  = [45, 1.4, 15, 'elite.png', 0, 40];
       break;
     case ShipType.Boss:
-      stats  = [200, 0.6, 19, 'boss.png'];
+      stats  = [200, 0.6, 25, 'boss.png', 40, 120];
       break;
     default:
       throw new Error('Invalid ship type!', 'data.es6');
@@ -51,7 +58,9 @@ export function getStatsForShipType(shipType) {
     health: stats[0],
     speed: stats[1],
     damage: stats[2],
-    texturePath: 'assets/ships/' + stats[3]
+    texturePath: 'assets/ships/' + stats[3],
+    maxShield: stats[4],
+    aimRand: stats[5]
   };
 }
 
@@ -84,6 +93,7 @@ export function loadTextures(cb) {
   loader.add("assets/hit.json");
   loader.add("assets/gauge-fill.png");
   loader.add("assets/gauge-full.png");
+  loader.add("assets/shield.png");
   loader.once('complete', cb);
   loader.load();
   return loader;

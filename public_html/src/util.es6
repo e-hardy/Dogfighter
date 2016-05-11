@@ -14,6 +14,15 @@ export function remove(arr, element) {
   arr.splice(arr.indexOf(element), 1);
 }
 
+export function getBounds(obj) {
+  return new PIXI.Rectangle(
+    obj.position.x,
+    obj.position.y,
+    obj.width,
+    obj.height
+  );
+}
+
 export function insertClip(name, container, options, destroyTime) {
   //name doesn't include the assets/ part, but does include extension
   //options is a set of k/v pairs to be set on the clip object

@@ -4,7 +4,7 @@ import Ship from '../display_objects/ship.es6';
 import Projectile from '../display_objects/projectile.es6';
 import PlayerManager from './player-manager.es6';
 import EnemyManager from './enemy-manager.es6';
-import {intersects, insertClip, Direction, remove} from '../util.es6';
+import {intersects, insertClip, Direction, remove, getBounds} from '../util.es6';
 import {getStatsForShipType, ShipType} from '../data.es6';
 
 export default class ShipManager {
@@ -27,7 +27,8 @@ export default class ShipManager {
       const missile = this.missiles[i];
       missile.update(dt);
       for (let ship of this.ships) {
-        if (ship.team !== missile.team && intersects(missile.getBounds(), ship.getBounds(), 30)) {
+        if (ship.team !== missile.team && intersects(getBounds(missile), getBounds(ship), 30)) {
+        //  if (ship.team !== 0) console.log(missile.getLocalBounds(), missile.position.x, missile.parent, ship.getLocalBounds(), ship.position.x, ship.parent);
           ship.takeDamage(missile.damage);
           shipsHit.push(ship);
         }
@@ -38,7 +39,7 @@ export default class ShipManager {
       if (shipsHit.length > 0) {
         missile.explode(shipsHit);
         this.destroyMissile(missile);
-      } else if (!intersects(missile.getBounds(), sceneRect)) {
+      } else if (!intersects(getBounds(missile), sceneRect)) {
         this.container.removeChild(missile);
         remove(this.missiles, missile);
         i--;

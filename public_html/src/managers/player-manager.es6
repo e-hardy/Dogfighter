@@ -2,7 +2,7 @@
 
 import {Direction} from '../util.es6';
 import Ship from '../display_objects/ship.es6';
-import {getStatsForShipType, ShipType} from '../data.es6';
+import {getStatsForShipType, ShipType, constants} from '../data.es6';
 
 export default class PlayerManager {
   constructor(shipManager) {
@@ -62,6 +62,10 @@ export default class PlayerManager {
             i--;
           }
         }
+        return;
+      } else if (e.code === "KeyP") {
+        //toggle pacifism
+        constants.pacifism = !constants.pacifism;
         return;
       } else {
         return;
