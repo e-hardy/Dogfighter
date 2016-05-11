@@ -18,6 +18,8 @@ export default class PlayerManager {
     });
 
     this.shipManager.container.on('click', (e) => {
+      // console.log(e);
+      console.log(e.data.originalEvent.clientX - 266, e.data.originalEvent.clientY - 373);
       if (e.data.originalEvent.offsetX < this.shipManager.sceneSize.width / 2 || !this.playerShip.shoot()) return;
       const start = new PIXI.Point(this.playerShip.position.x + this.playerShip.width, this.playerShip.position.y);
       const end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);

@@ -18,6 +18,7 @@ renderer.backgroundColor = 0xe6ffff;
 
 const container = new GameContainer();
 container.interactive = true;
+container.r = renderer;
 
 const loader = loadTextures(startGame);
 

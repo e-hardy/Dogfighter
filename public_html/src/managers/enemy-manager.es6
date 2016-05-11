@@ -38,7 +38,7 @@ export default class EnemyManager {
           vy = Math.sin(angle) * shooter.missileSpeed;
     const time = Math.abs((start.x - target.position.x + target.width / 2) / vx);
     const heightChange = vy * time + 0.5 * Projectile.gravity() * time * time;
-    return (Math.abs(start.y + heightChange - target.position.y - target.velocity * time) <= 2);
+    return (Math.abs(start.y + heightChange - target.position.y - target.velocity * time * 0.7) <= 2);
   }
 
   setNextShot(ship) {

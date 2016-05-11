@@ -77,6 +77,7 @@
 
 	var container = new _gameContainer2.default();
 	container.interactive = true;
+	container.r = renderer;
 
 	var loader = (0, _data.loadTextures)(startGame);
 
@@ -333,7 +334,7 @@
 	          for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 	            var ship = _step2.value;
 
-	            if (ship.team !== missile.team && (0, _util.intersects)((0, _util.getBounds)(missile), (0, _util.getBounds)(ship), 30)) {
+	            if (ship.team !== missile.team && (0, _util.intersects)((0, _util.getBounds)(missile), (0, _util.getBounds)(ship))) {
 	              //  if (ship.team !== 0) console.log(missile.getLocalBounds(), missile.position.x, missile.parent, ship.getLocalBounds(), ship.position.x, ship.parent);
 	              ship.takeDamage(missile.damage);
 	              shipsHit.push(ship);
@@ -400,6 +401,10 @@
 	      };
 	      this.ships.push(ship);
 	      this.container.addChild(ship);
+
+	      // ship.position.y = this.container.height / 2;
+	      // console.log(getBounds(ship));
+
 	      return ship;
 	    }
 	  }, {
@@ -491,9 +496,9 @@
 	// const [UP, NONE, DOWN] =    <= we probably don't need this
 	//         [Symbol('up'), Symbol('none'), Symbol('down')];
 
-	function updateBar(bar, dt) {
+	function updateBar(bar, dt, time) {
 	  if (bar.width < bar.maxWidth) {
-	    bar.width += bar.maxWidth / 1000 * dt;
+	    bar.width += bar.maxWidth / time * dt;
 	    if (bar.width > bar.maxWidth) bar.width = bar.maxWidth;
 	  }
 	}
@@ -525,7 +530,6 @@
 	    _this.zIndex = 1;
 	    _this.sceneSize = sceneSize;
 	    _this.firePosition = null;
-	    _this.missileSpeed = 2;
 	    _this.isEdgeAccelerating = false;
 	    _this.initHealthBar();
 	    return _this;
@@ -614,22 +618,13 @@
 	      if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
 	      if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
 
-	      updateBar(this.chargeBar, dt);
+	      updateBar(this.chargeBar, dt, this.chargeRegenTime);
 	      if (this.shieldBar.restCount < _data.constants.shieldDelay) {
 	        this.shieldBar.restCount += dt;
 	      }
 	      if (this.shieldBar.restCount >= _data.constants.shieldDelay) {
-	        updateBar(this.shieldBar, dt);
+	        updateBar(this.shieldBar, dt, this.shieldRegenTime);
 	      }
-
-	      // if (this.chargeBar.width < this.chargeBar.maxWidth) {
-	      //   this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
-	      //   if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
-	      // }
-	      // if (this.shieldBar.width < this.shieldBar.maxWidth) {
-	      //   this.shieldBar.width += this.shieldBar.maxWidth / 1000 * dt;
-	      //   if (this.shieldBar.width > this.shieldBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
-	      // }
 	    }
 	  }]);
 
@@ -762,9 +757,10 @@
 	};
 
 	function intersects(r1, r2) {
-	  var margin = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+	  var marginY = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
+	  var marginX = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
 
-	  return !(r1.x + r1.width < r2.x + margin || r1.x + margin > r2.x + r2.width || r1.y + r1.height < r2.y + margin || r1.y + margin > r2.y + r2.height);
+	  return !(r1.x + r1.width < r2.x - marginX || r1.x - marginX > r2.x + r2.width || r1.y + r1.height < r2.y - marginY || r1.y - marginY > r2.y + r2.height);
 	}
 
 	function remove(arr, element) {
@@ -772,7 +768,7 @@
 	}
 
 	function getBounds(obj) {
-	  return new PIXI.Rectangle(obj.position.x, obj.position.y, obj.width, obj.height);
+	  return new PIXI.Rectangle(obj.position.x - obj.width * obj.anchor.x, obj.position.y - obj.height * obj.anchor.y, obj.width, obj.height);
 	}
 
 	function insertClip(name, container, options, destroyTime) {
@@ -858,6 +854,8 @@
 	      });
 
 	      this.shipManager.container.on('click', function (e) {
+	        // console.log(e);
+	        console.log(e.data.originalEvent.clientX - 266, e.data.originalEvent.clientY - 373);
 	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
 	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
 	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
@@ -963,23 +961,23 @@
 	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
 
 	function getStatsForShipType(shipType) {
-	  var stats = void 0; // [health, speed, damage, texturePath, maxShield, aimRand];
+	  var stats = void 0; // [health, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
 	  //aimRand is the range (up or down) around the target that the enemy may aim at
 	  switch (shipType) {
 	    case ShipType.Player:
-	      stats = [50, 1, 9, 'player.png', 12];
+	      stats = [70, 1.2, 9, 'player.png', 30, 0, 2, 1000, 1000];
 	      break;
 	    case ShipType.Grunt:
-	      stats = [15, 1.2, 5, 'grunt.png', 0, 150];
+	      stats = [15, 1, 5, 'grunt.png', 0, 150, 2, 1, 1100];
 	      break;
 	    case ShipType.Brute:
-	      stats = [25, 0.8, 12, 'brute.png', 0, 70];
+	      stats = [25, 0.8, 14, 'brute.png', 0, 70, 1.5, 1, 1300];
 	      break;
 	    case ShipType.Elite:
-	      stats = [45, 1.4, 15, 'elite.png', 0, 40];
+	      stats = [30, 1.1, 14, 'elite.png', 15, 40, 2.5, 600, 1000];
 	      break;
 	    case ShipType.Boss:
-	      stats = [200, 0.6, 25, 'boss.png', 40, 120];
+	      stats = [200, 0.4, 32, 'boss.png', 40, 120, 1.8, 1300, 1800];
 	      break;
 	    default:
 	      throw new Error('Invalid ship type!', 'data.es6');
@@ -990,7 +988,10 @@
 	    damage: stats[2],
 	    texturePath: 'assets/ships/' + stats[3],
 	    maxShield: stats[4],
-	    aimRand: stats[5]
+	    aimRand: stats[5],
+	    missileSpeed: stats[6],
+	    shieldRegenTime: stats[7],
+	    chargeRegenTime: stats[8]
 	  };
 	}
 
@@ -1119,7 +1120,7 @@
 	          vy = Math.sin(angle) * shooter.missileSpeed;
 	      var time = Math.abs((start.x - target.position.x + target.width / 2) / vx);
 	      var heightChange = vy * time + 0.5 * _projectile2.default.gravity() * time * time;
-	      return Math.abs(start.y + heightChange - target.position.y - target.velocity * time) <= 2;
+	      return Math.abs(start.y + heightChange - target.position.y - target.velocity * time * 0.7) <= 2;
 	    }
 	  }, {
 	    key: 'setNextShot',

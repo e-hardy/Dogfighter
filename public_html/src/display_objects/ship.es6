@@ -10,9 +10,9 @@ const [HEALTH, DIRECTION, SHIELD, accelFactor, dragFactor]
 // const [UP, NONE, DOWN] =    <= we probably don't need this
 //         [Symbol('up'), Symbol('none'), Symbol('down')];
 
-function updateBar(bar, dt) {
+function updateBar(bar, dt, time) {
   if (bar.width < bar.maxWidth) {
-    bar.width += bar.maxWidth / 1000 * dt;
+    bar.width += bar.maxWidth / time * dt;
     if (bar.width > bar.maxWidth) bar.width = bar.maxWidth;
   }
 }
@@ -38,7 +38,6 @@ export default class Ship extends PIXI.Sprite {
     this.zIndex = 1;
     this.sceneSize = sceneSize;
     this.firePosition = null;
-    this.missileSpeed = 2;
     this.isEdgeAccelerating = false;
     this.initHealthBar();
   }
@@ -121,21 +120,12 @@ export default class Ship extends PIXI.Sprite {
     if (this.position.y < 0 && this.velocity < 0) this.position.y = 0;
     if (this.position.y > this.sceneSize.height && this.velocity > 0) this.position.y = this.sceneSize.height;
 
-    updateBar(this.chargeBar, dt);
+    updateBar(this.chargeBar, dt, this.chargeRegenTime);
     if (this.shieldBar.restCount < constants.shieldDelay) {
       this.shieldBar.restCount += dt;
     }
     if (this.shieldBar.restCount >= constants.shieldDelay) {
-      updateBar(this.shieldBar, dt);
+      updateBar(this.shieldBar, dt, this.shieldRegenTime);
     }
-
-    // if (this.chargeBar.width < this.chargeBar.maxWidth) {
-    //   this.chargeBar.width += this.chargeBar.maxWidth / 1000 * dt;
-    //   if (this.chargeBar.width > this.chargeBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
-    // }
-    // if (this.shieldBar.width < this.shieldBar.maxWidth) {
-    //   this.shieldBar.width += this.shieldBar.maxWidth / 1000 * dt;
-    //   if (this.shieldBar.width > this.shieldBar.maxWidth) this.chargeBar.width = this.chargeBar.maxWidth;
-    // }
   }
 }

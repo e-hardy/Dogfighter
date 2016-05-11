@@ -6,8 +6,8 @@ export const Direction = {
     get Down() { return 1; }
 };
 
-export function intersects(r1, r2, margin = 0) {
-  return !(r1.x + r1.width < r2.x + margin || r1.x + margin > r2.x + r2.width || r1.y + r1.height < r2.y + margin || r1.y + margin > r2.y + r2.height);
+export function intersects(r1, r2, marginY = 0, marginX = 0) {
+  return !(r1.x + r1.width < r2.x - marginX || r1.x - marginX > r2.x + r2.width || r1.y + r1.height < r2.y - marginY || r1.y - marginY > r2.y + r2.height);
 }
 
 export function remove(arr, element) {
@@ -16,8 +16,8 @@ export function remove(arr, element) {
 
 export function getBounds(obj) {
   return new PIXI.Rectangle(
-    obj.position.x,
-    obj.position.y,
+    obj.position.x - obj.width * obj.anchor.x,
+    obj.position.y - obj.height * obj.anchor.y,
     obj.width,
     obj.height
   );

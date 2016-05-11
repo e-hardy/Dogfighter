@@ -33,23 +33,23 @@ const waveData = [
 ];
 
 export function getStatsForShipType(shipType) {
-  let stats;// [health, speed, damage, texturePath, maxShield, aimRand];
+  let stats;// [health, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
   //aimRand is the range (up or down) around the target that the enemy may aim at
   switch (shipType) {
     case ShipType.Player:
-      stats  = [50, 1, 9, 'player.png', 12];
+      stats  = [70, 1.2, 9, 'player.png', 30, 0, 2, 1000, 1000];
       break;
     case ShipType.Grunt:
-      stats  = [15, 1.2, 5, 'grunt.png', 0, 150];
+      stats  = [15, 1, 5, 'grunt.png', 0, 150, 2, 1, 1100];
       break;
     case ShipType.Brute:
-      stats  = [25, 0.8, 12, 'brute.png', 0, 70];
+      stats  = [25, 0.8, 14, 'brute.png', 0, 70, 1.5, 1, 1300];
       break;
     case ShipType.Elite:
-      stats  = [45, 1.4, 15, 'elite.png', 0, 40];
+      stats  = [30, 1.1, 14, 'elite.png', 15, 40, 2.5, 600, 1000];
       break;
     case ShipType.Boss:
-      stats  = [200, 0.6, 25, 'boss.png', 40, 120];
+      stats  = [200, 0.4, 32, 'boss.png', 40, 120, 1.8, 1300, 1800];
       break;
     default:
       throw new Error('Invalid ship type!', 'data.es6');
@@ -60,7 +60,10 @@ export function getStatsForShipType(shipType) {
     damage: stats[2],
     texturePath: 'assets/ships/' + stats[3],
     maxShield: stats[4],
-    aimRand: stats[5]
+    aimRand: stats[5],
+    missileSpeed: stats[6],
+    shieldRegenTime: stats[7],
+    chargeRegenTime: stats[8]
   };
 }
 
