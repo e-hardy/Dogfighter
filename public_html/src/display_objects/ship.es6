@@ -24,14 +24,14 @@ export default class Ship extends PIXI.Sprite {
     //speed works like this: ships' accelerations are equal to half their speed,
     //and they can accelerate until they hit that speed, at which point they'll
     //remain at this speed until they change something
-    this.speed = stats.speed;
-    this.damage = stats.damage;
-    this[HEALTH] = stats.health;
-    this.maxHealth = stats.health;
-    this.maxShield = stats.maxShield || 0;
+    // this.speed = stats.speed;
+    // this.damage = stats.damage;
+    // this.maxHealth = stats.health;
+    // this.maxShield = stats.maxShield || 0;
     for (let key in stats) {
       this[key] = stats[key];
     }
+    this[HEALTH] = this.maxHealth;
     this[SHIELD] = this.maxShield;
     this.velocity = 0;
     this.direction = Direction.None;
@@ -39,6 +39,7 @@ export default class Ship extends PIXI.Sprite {
     this.sceneSize = sceneSize;
     this.firePosition = null;
     this.isEdgeAccelerating = false;
+    this.timeCount = Math.random() * 250 / 2 / Math.PI;
     this.initHealthBar();
   }
 
@@ -58,8 +59,6 @@ export default class Ship extends PIXI.Sprite {
     this.chargeBar = charge;
     this.chargeBar.maxWidth = this.chargeBar.width;
     this.addChild(healthBar);
-    healthBar.position.x = this.width / 2 - healthBar.width / 2 - 10;
-    healthBar.position.y = -10 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
     this.hbFill = hbFill;
     this.maxHbWidth = hbFill.texture.width;
 
@@ -71,6 +70,26 @@ export default class Ship extends PIXI.Sprite {
     this.shieldBar.position.x = hbFill.position.x;
     this.shieldBar.position.y = hbFill.position.y;
     healthBar.addChild(this.shieldBar);
+    healthBar.width *= 1.4;
+    healthBar.height *= 1.2;
+    healthBar.position.x = this.width / 2 - healthBar.width / 2;
+    healthBar.position.y = -20 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
+  }
+
+  get health() { return this[HEALTH]; }
+
+  set health(health) {
+    console.log("h");
+    this[HEALTH] = health;
+    this.hbFill.width = this.maxHbWidth * this[HEALTH] / this.maxHealth;
+  }
+
+  get shield() { return this[HEALTH]; }
+
+  set shield(shield) {
+    console.log("s");
+    this[SHIELD] = shield;
+    this.shieldBar.width = this.maxHbWidth * this[SHIELD] / this.maxShield;
   }
 
   shoot() {
@@ -127,5 +146,7 @@ export default class Ship extends PIXI.Sprite {
     if (this.shieldBar.restCount >= constants.shieldDelay) {
       updateBar(this.shieldBar, dt, this.shieldRegenTime);
     }
+    this.position.x += Math.sin(this.timeCount / 250) / 2;
+    this.timeCount += dt;
   }
 }

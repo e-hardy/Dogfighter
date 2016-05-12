@@ -55,6 +55,8 @@ export default class ShipManager {
    if (shipType !== ShipType.Boss) {
       ship.width *= 0.7;
       ship.height *= 0.7;
+   } else {
+     this.playerManager.refreshPlayer();
    }
     ship.anchor = new PIXI.Point(0, 0.5);
     if (shipType === ShipType.Player) {
@@ -62,7 +64,8 @@ export default class ShipManager {
       ship.team = 0;
       ship.position = new PIXI.Point(50, h / 2);
     } else {
-      ship.direction = Direction.Down;
+       ship.direction = Direction.Down;
+      //ship.direction = Direction.None;
       ship.team = 1;
       ship.position = new PIXI.Point(w - 50 - ship.width, ship.height / -2);
     }
@@ -97,12 +100,15 @@ export default class ShipManager {
     }, 125);
   }
 
-  createMissile(start, heading, team, damage, speed = 2) {
+  createMissile(start, heading, ship, speed = 2) {
     //heading can either be an endpoint (PIXI.Point) or an angle (Number)
     const angle = (heading.x === undefined) ?
         heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
     const texture = PIXI.loader.resources["assets/missile.png"].texture;
-    const missile = new Projectile(texture, angle, team, damage, speed);
+    const missile = new Projectile(texture, angle, ship.team, ship.damage, speed);
+    // if (ship.team === 0) {
+    //   missile.yVelocity += ship.velocity * 0.3;
+    // }
     if (angle > Math.PI / 2) {
       missile.scale.x = -1;
     }

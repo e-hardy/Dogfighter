@@ -33,7 +33,7 @@ const waveData = [
 ];
 
 export function getStatsForShipType(shipType) {
-  let stats;// [health, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
+  let stats;// [maxHealth, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
   //aimRand is the range (up or down) around the target that the enemy may aim at
   switch (shipType) {
     case ShipType.Player:
@@ -55,7 +55,7 @@ export function getStatsForShipType(shipType) {
       throw new Error('Invalid ship type!', 'data.es6');
   }
   return {
-    health: stats[0],
+    maxHealth: stats[0],
     speed: stats[1],
     damage: stats[2],
     texturePath: 'assets/ships/' + stats[3],

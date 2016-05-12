@@ -382,6 +382,8 @@
 	      if (shipType !== _data.ShipType.Boss) {
 	        ship.width *= 0.7;
 	        ship.height *= 0.7;
+	      } else {
+	        this.playerManager.refreshPlayer();
 	      }
 	      ship.anchor = new PIXI.Point(0, 0.5);
 	      if (shipType === _data.ShipType.Player) {
@@ -390,6 +392,7 @@
 	        ship.position = new PIXI.Point(50, h / 2);
 	      } else {
 	        ship.direction = _util.Direction.Down;
+	        //ship.direction = Direction.None;
 	        ship.team = 1;
 	        ship.position = new PIXI.Point(w - 50 - ship.width, ship.height / -2);
 	      }
@@ -428,13 +431,16 @@
 	    }
 	  }, {
 	    key: 'createMissile',
-	    value: function createMissile(start, heading, team, damage) {
-	      var speed = arguments.length <= 4 || arguments[4] === undefined ? 2 : arguments[4];
+	    value: function createMissile(start, heading, ship) {
+	      var speed = arguments.length <= 3 || arguments[3] === undefined ? 2 : arguments[3];
 
 	      //heading can either be an endpoint (PIXI.Point) or an angle (Number)
 	      var angle = heading.x === undefined ? heading : Math.atan((heading.y - start.y) / (heading.x - start.x));
 	      var texture = PIXI.loader.resources["assets/missile.png"].texture;
-	      var missile = new _projectile2.default(texture, angle, team, damage, speed);
+	      var missile = new _projectile2.default(texture, angle, ship.team, ship.damage, speed);
+	      // if (ship.team === 0) {
+	      //   missile.yVelocity += ship.velocity * 0.3;
+	      // }
 	      if (angle > Math.PI / 2) {
 	        missile.scale.x = -1;
 	      }
@@ -513,17 +519,17 @@
 	    //speed works like this: ships' accelerations are equal to half their speed,
 	    //and they can accelerate until they hit that speed, at which point they'll
 	    //remain at this speed until they change something
+	    // this.speed = stats.speed;
+	    // this.damage = stats.damage;
+	    // this.maxHealth = stats.health;
+	    // this.maxShield = stats.maxShield || 0;
 
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Ship).call(this, texture));
 
-	    _this.speed = stats.speed;
-	    _this.damage = stats.damage;
-	    _this[HEALTH] = stats.health;
-	    _this.maxHealth = stats.health;
-	    _this.maxShield = stats.maxShield || 0;
 	    for (var key in stats) {
 	      _this[key] = stats[key];
 	    }
+	    _this[HEALTH] = _this.maxHealth;
 	    _this[SHIELD] = _this.maxShield;
 	    _this.velocity = 0;
 	    _this.direction = _util.Direction.None;
@@ -531,6 +537,7 @@
 	    _this.sceneSize = sceneSize;
 	    _this.firePosition = null;
 	    _this.isEdgeAccelerating = false;
+	    _this.timeCount = Math.random() * 250 / 2 / Math.PI;
 	    _this.initHealthBar();
 	    return _this;
 	  }
@@ -553,8 +560,6 @@
 	      this.chargeBar = charge;
 	      this.chargeBar.maxWidth = this.chargeBar.width;
 	      this.addChild(healthBar);
-	      healthBar.position.x = this.width / 2 - healthBar.width / 2 - 10;
-	      healthBar.position.y = -10 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
 	      this.hbFill = hbFill;
 	      this.maxHbWidth = hbFill.texture.width;
 
@@ -566,6 +571,10 @@
 	      this.shieldBar.position.x = hbFill.position.x;
 	      this.shieldBar.position.y = hbFill.position.y;
 	      healthBar.addChild(this.shieldBar);
+	      healthBar.width *= 1.4;
+	      healthBar.height *= 1.2;
+	      healthBar.position.x = this.width / 2 - healthBar.width / 2;
+	      healthBar.position.y = -20 - this.height / 2; //` - this.height / 2` because the ship's anchor.y = 0.5
 	    }
 	  }, {
 	    key: 'shoot',
@@ -625,6 +634,28 @@
 	      if (this.shieldBar.restCount >= _data.constants.shieldDelay) {
 	        updateBar(this.shieldBar, dt, this.shieldRegenTime);
 	      }
+	      this.position.x += Math.sin(this.timeCount / 250) / 2;
+	      this.timeCount += dt;
+	    }
+	  }, {
+	    key: 'health',
+	    get: function get() {
+	      return this[HEALTH];
+	    },
+	    set: function set(health) {
+	      console.log("h");
+	      this[HEALTH] = health;
+	      this.hbFill.width = this.maxHbWidth * this[HEALTH] / this.maxHealth;
+	    }
+	  }, {
+	    key: 'shield',
+	    get: function get() {
+	      return this[HEALTH];
+	    },
+	    set: function set(shield) {
+	      console.log("s");
+	      this[SHIELD] = shield;
+	      this.shieldBar.width = this.maxHbWidth * this[SHIELD] / this.maxShield;
 	    }
 	  }]);
 
@@ -859,8 +890,14 @@
 	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
 	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
 	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-	        _this.shipManager.createMissile(start, end, _this.playerShip.team, _this.playerShip.damage, _this.playerShip.missileSpeed);
+	        _this.shipManager.createMissile(start, end, _this.playerShip, _this.playerShip.missileSpeed);
 	      });
+	    }
+	  }, {
+	    key: 'refreshPlayer',
+	    value: function refreshPlayer() {
+	      this.playerShip.health = this.playerShip.maxHealth;
+	      this.playerShip.shield = this.playerShip.maxShield;
 	    }
 	  }, {
 	    key: 'initKeyInputs',
@@ -961,7 +998,7 @@
 	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
 
 	function getStatsForShipType(shipType) {
-	  var stats = void 0; // [health, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
+	  var stats = void 0; // [maxHealth, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
 	  //aimRand is the range (up or down) around the target that the enemy may aim at
 	  switch (shipType) {
 	    case ShipType.Player:
@@ -983,7 +1020,7 @@
 	      throw new Error('Invalid ship type!', 'data.es6');
 	  }
 	  return {
-	    health: stats[0],
+	    maxHealth: stats[0],
 	    speed: stats[1],
 	    damage: stats[2],
 	    texturePath: 'assets/ships/' + stats[3],
@@ -1144,7 +1181,7 @@
 	        }
 	      }
 	      if (ship.shoot() && worked) {
-	        this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
+	        this.shipManager.createMissile(start, Math.PI - angle, ship, ship.missileSpeed);
 	      }
 	      setTimeout(function () {
 	        _this2.setNextShot(ship);
@@ -1157,7 +1194,9 @@
 
 	      if (ship.parent === null) {
 	        if (this.numShips === 0) {
+	          //  setTimeout(() => {
 	          this.sendNextWave();
+	          //  }, 1000);
 	        }
 	        return;
 	      }
@@ -1194,7 +1233,7 @@
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1205,6 +1244,8 @@
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _util = __webpack_require__(5);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1218,7 +1259,10 @@
 	  function GameContainer() {
 	    _classCallCheck(this, GameContainer);
 
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(GameContainer).apply(this, arguments));
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(GameContainer).call(this));
+
+	    _this.anims = [];
+	    return _this;
 	  }
 
 	  _createClass(GameContainer, [{
@@ -1230,6 +1274,35 @@
 	        b.zIndex = b.zIndex || 0;
 	        return a.zIndex - b.zIndex;
 	      });
+	    }
+	  }, {
+	    key: 'animateToPoint',
+	    value: function animateToPoint(obj, pt) {
+	      var speed = arguments.length <= 2 || arguments[2] === undefined ? 2 : arguments[2];
+
+	      var dx = pt.x - obj.position.x;
+	      var dy = pt.y - obj.position.y;
+	      var theta = Math.atan2(dy, dx);
+
+	      this.anims.push({
+	        obj: obj,
+	        velocity: { x: speed * Math.cos(theta), y: speed * Math.sin(theta) },
+	        dest: pt
+	      });
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      for (var i = 0; i < this.anims.length; i++) {
+	        var a = this.anims[i];
+	        a.obj.position.x += a.velocity.x * dt;
+	        a.obj.position.y += a.velocity.y * dt;
+	        if ((a.dest.x - a.obj.position.x) * a.velocity.x <= 0) {
+	          a.obj.position = a.dest;
+	          (0, _util.remove)(this.anims, a);
+	          i--;
+	        }
+	      }
 	    }
 	  }]);
 

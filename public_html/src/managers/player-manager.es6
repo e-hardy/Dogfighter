@@ -23,8 +23,13 @@ export default class PlayerManager {
       if (e.data.originalEvent.offsetX < this.shipManager.sceneSize.width / 2 || !this.playerShip.shoot()) return;
       const start = new PIXI.Point(this.playerShip.position.x + this.playerShip.width, this.playerShip.position.y);
       const end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-      this.shipManager.createMissile(start, end, this.playerShip.team, this.playerShip.damage, this.playerShip.missileSpeed);
+      this.shipManager.createMissile(start, end, this.playerShip, this.playerShip.missileSpeed);
     });
+  }
+
+  refreshPlayer() {
+    this.playerShip.health = this.playerShip.maxHealth;
+    this.playerShip.shield = this.playerShip.maxShield;
   }
 
   initKeyInputs() {

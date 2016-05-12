@@ -58,7 +58,7 @@ export default class EnemyManager {
       }
     }
     if (ship.shoot() && worked) {
-      this.shipManager.createMissile(start, Math.PI - angle, ship.team, ship.damage, ship.missileSpeed);
+      this.shipManager.createMissile(start, Math.PI - angle, ship, ship.missileSpeed);
     }
     setTimeout(() => {
       this.setNextShot(ship);
@@ -68,7 +68,9 @@ export default class EnemyManager {
   setNextMove(ship) {
     if (ship.parent === null) {
       if (this.numShips === 0) {
-        this.sendNextWave();
+      //  setTimeout(() => {
+          this.sendNextWave();
+      //  }, 1000);
       }
       return;
     }
