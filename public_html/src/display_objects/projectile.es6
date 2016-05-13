@@ -2,7 +2,7 @@
 
 import {insertClip} from '../util.es6';
 
-const gravity = 0.002;
+const gravity = 0.0018;
 
 export default class Projectile extends PIXI.Sprite {
   constructor(texture, angle, team, damage, velocity = 2) {

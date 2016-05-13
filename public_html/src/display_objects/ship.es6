@@ -46,9 +46,9 @@ export default class Ship extends PIXI.Sprite {
   initHealthBar() {
     const healthBar = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-container.png')),
           hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png')),
-          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-full.png'));
-    this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
-    this.fullText = charge.texture;
+          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-fill.png'));
+    // this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
+    // this.fullText = charge.texture;
     healthBar.addChild(hbFill);
     hbFill.position.x = healthBar.width / 2 - hbFill.width / 2;
     hbFill.position.y = healthBar.height / 2 - hbFill.height / 2;
@@ -79,7 +79,6 @@ export default class Ship extends PIXI.Sprite {
   get health() { return this[HEALTH]; }
 
   set health(health) {
-    console.log("h");
     this[HEALTH] = health;
     this.hbFill.width = this.maxHbWidth * this[HEALTH] / this.maxHealth;
   }
@@ -87,7 +86,6 @@ export default class Ship extends PIXI.Sprite {
   get shield() { return this[HEALTH]; }
 
   set shield(shield) {
-    console.log("s");
     this[SHIELD] = shield;
     this.shieldBar.width = this.maxHbWidth * this[SHIELD] / this.maxShield;
   }
@@ -146,7 +144,8 @@ export default class Ship extends PIXI.Sprite {
     if (this.shieldBar.restCount >= constants.shieldDelay) {
       updateBar(this.shieldBar, dt, this.shieldRegenTime);
     }
-    this.position.x += Math.sin(this.timeCount / 250) / 2;
+    // this.position.x += Math.sin(this.timeCount / 250) / 2;
+    this.position.x += Math.sin(this.timeCount / 200) / 2;
     this.timeCount += dt;
   }
 }

@@ -3,6 +3,7 @@
 import {Direction, insertClip} from '../util.es6';
 import Ship from '../display_objects/ship.es6';
 import Projectile from '../display_objects/projectile.es6';
+import getDefaultOverlay from '../display_objects/hud-overlay.es6';
 import {getStatsForShipType, getShipsForWaveNumber, ShipType} from '../data.es6';
 
 
@@ -20,6 +21,7 @@ export default class EnemyManager {
       this.addEnemyShip(ship);
     }
     this.wave++;
+    getDefaultOverlay().waveNumber = this.wave;
   }
 
   addEnemyShip(shipType) {
@@ -46,12 +48,24 @@ export default class EnemyManager {
       return;
     }
     const playerShip = this.shipManager.playerManager.playerShip;
+    if (!playerShip.parent) {
+      //player has died
+      return;
+    }
     const start = new PIXI.Point(ship.position.x, ship.position.y);
     let angle, worked = false;
     let rand = Math.random() * ship.aimRand * 2 - ship.aimRand;
-    let pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
+    let p = {
+      position: {
+        x: playerShip.position.x,
+        y: playerShip.position.y + rand
+      },
+      width: playerShip.width,
+      velocity: playerShip.velocity
+    };
+  //  let pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
     for (let theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-      if (this.shotWillHit(theta, ship, playerShip, pos)) {
+      if (this.shotWillHit(theta, ship, p, ship.position)) {
         angle = theta;
         worked = true;
         break;
@@ -86,7 +100,7 @@ export default class EnemyManager {
       else ship.direction = Direction.Up;
     }
     let maxInterval; //in ms; we need to configure this so that the enemy won't stay against a wall
-    let minInterval = 1000 / ship.speed; //slower ships should move for longer
+    let minInterval = 100 / ship.speed; //slower ships should move for longer
     if (ship.direction === Direction.Up) {
       maxInterval = ship.position.y / ship.speed;
     } else if (ship.direction === Direction.Down) {
@@ -95,8 +109,10 @@ export default class EnemyManager {
       maxInterval = 1000;
       minInterval = 500;
     }
+    if (ship.position.y - ship.height / 2 < 0) ship.direction = Direction.Down;
+    else if (ship.position.y + ship.height / 2 > this.shipManager.sceneSize.height) ship.direction = Direction.Up;
     setTimeout(() => {
       this.setNextMove(ship);
-    }, Math.random() * maxInterval);
+    }, Math.random() * (maxInterval + minInterval) + minInterval);
   }
 }

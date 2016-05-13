@@ -27,8 +27,7 @@ export default class ShipManager {
       const missile = this.missiles[i];
       missile.update(dt);
       for (let ship of this.ships) {
-        if (ship.team !== missile.team && intersects(getBounds(missile), getBounds(ship))) {
-        //  if (ship.team !== 0) console.log(missile.getLocalBounds(), missile.position.x, missile.parent, ship.getLocalBounds(), ship.position.x, ship.parent);
+        if (!ship.shrunk && ship.team !== missile.team && intersects(getBounds(missile), getBounds(ship))) {
           ship.takeDamage(missile.damage);
           shipsHit.push(ship);
         }
@@ -53,8 +52,8 @@ export default class ShipManager {
     const ship = new Ship(text, stats, this.sceneSize);
     const [w, h] = [this.sceneSize.width, this.sceneSize.height];
    if (shipType !== ShipType.Boss) {
-      ship.width *= 0.7;
-      ship.height *= 0.7;
+      ship.width *= 0.8;
+      ship.height *= 0.8;
    } else {
      this.playerManager.refreshPlayer();
    }
@@ -79,7 +78,6 @@ export default class ShipManager {
     this.container.addChild(ship);
 
     // ship.position.y = this.container.height / 2;
-    // console.log(getBounds(ship));
 
     return ship;
   }

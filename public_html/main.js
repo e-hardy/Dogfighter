@@ -58,7 +58,13 @@
 
 	var _gameContainer2 = _interopRequireDefault(_gameContainer);
 
-	var _data = __webpack_require__(7);
+	var _hudOverlay = __webpack_require__(11);
+
+	var _hudOverlay2 = _interopRequireDefault(_hudOverlay);
+
+	var _data = __webpack_require__(6);
+
+	var _gameCycle = __webpack_require__(18);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -67,26 +73,47 @@
 	    pushStrength = -20,
 	    initialY = 200;
 
-	var renderer = PIXI.autoDetectRenderer(1000, 600);
+	var renderer = PIXI.autoDetectRenderer(1200, 700);
 	document.body.appendChild(renderer.view);
 	renderer.view.style.position = 'absolute';
 	renderer.view.style.left = '50%';
 	renderer.view.style.top = '50%';
 	renderer.view.style.transform = 'translate3d( -50%, -50%, 0 )';
 	renderer.backgroundColor = 0xe6ffff;
+	// renderer.width += 200;
+	window.renderer = renderer;
 
 	var container = new _gameContainer2.default();
+	container.sceneSize = { width: renderer.width, height: renderer.height };
 	container.interactive = true;
 	container.r = renderer;
+	window.container = container;
 
 	var loader = (0, _data.loadTextures)(startGame);
 
 	var sceneryManager = void 0,
 	    shipManager = void 0;
+	window.sceneryManager = sceneryManager;
+	window.shipManager = shipManager;
 
 	document.body.appendChild(renderer.view);
 
+	function restart() {
+	  container.destroy();
+	  container = new _gameContainer2.default();
+	  container.sceneSize = { width: renderer.width, height: renderer.height };
+	  container.interactive = true;
+	  (0, _hudOverlay2.default)(container, true).restart = restart;
+
+	  sceneryManager = new _sceneryManager2.default(container, renderer.width, renderer.height);
+	  shipManager = new _shipManager2.default(container, renderer.width, renderer.height);
+
+	  sceneryManager.loadData(loader.resources["assets/clouds.json"].textures);
+	}
+
 	function startGame() {
+
+	  (0, _hudOverlay2.default)(container).restart = restart;
 
 	  sceneryManager = new _sceneryManager2.default(container, renderer.width, renderer.height);
 	  shipManager = new _shipManager2.default(container, renderer.width, renderer.height);
@@ -109,6 +136,7 @@
 
 	  sceneryManager.update(dt);
 	  shipManager.update(dt);
+	  container.update(dt);
 
 	  renderer.render(container);
 	}
@@ -266,7 +294,7 @@
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
-	var _playerManager = __webpack_require__(6);
+	var _playerManager = __webpack_require__(7);
 
 	var _playerManager2 = _interopRequireDefault(_playerManager);
 
@@ -276,7 +304,7 @@
 
 	var _util = __webpack_require__(5);
 
-	var _data = __webpack_require__(7);
+	var _data = __webpack_require__(6);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -334,8 +362,7 @@
 	          for (var _iterator2 = this.ships[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 	            var ship = _step2.value;
 
-	            if (ship.team !== missile.team && (0, _util.intersects)((0, _util.getBounds)(missile), (0, _util.getBounds)(ship))) {
-	              //  if (ship.team !== 0) console.log(missile.getLocalBounds(), missile.position.x, missile.parent, ship.getLocalBounds(), ship.position.x, ship.parent);
+	            if (!ship.shrunk && ship.team !== missile.team && (0, _util.intersects)((0, _util.getBounds)(missile), (0, _util.getBounds)(ship))) {
 	              ship.takeDamage(missile.damage);
 	              shipsHit.push(ship);
 	            }
@@ -380,8 +407,8 @@
 	      var h = this.sceneSize.height;
 
 	      if (shipType !== _data.ShipType.Boss) {
-	        ship.width *= 0.7;
-	        ship.height *= 0.7;
+	        ship.width *= 0.8;
+	        ship.height *= 0.8;
 	      } else {
 	        this.playerManager.refreshPlayer();
 	      }
@@ -406,7 +433,6 @@
 	      this.container.addChild(ship);
 
 	      // ship.position.y = this.container.height / 2;
-	      // console.log(getBounds(ship));
 
 	      return ship;
 	    }
@@ -483,7 +509,7 @@
 
 	var _util = __webpack_require__(5);
 
-	var _data = __webpack_require__(7);
+	var _data = __webpack_require__(6);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -547,9 +573,9 @@
 	    value: function initHealthBar() {
 	      var healthBar = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-container.png')),
 	          hbFill = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/hp-fill.png')),
-	          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-full.png'));
-	      this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
-	      this.fullText = charge.texture;
+	          charge = new PIXI.Sprite(new PIXI.Texture.fromFrame('assets/gauge-fill.png'));
+	      // this.fillText = new PIXI.Texture.fromFrame('assets/gauge-fill.png');
+	      // this.fullText = charge.texture;
 	      healthBar.addChild(hbFill);
 	      hbFill.position.x = healthBar.width / 2 - hbFill.width / 2;
 	      hbFill.position.y = healthBar.height / 2 - hbFill.height / 2;
@@ -634,7 +660,8 @@
 	      if (this.shieldBar.restCount >= _data.constants.shieldDelay) {
 	        updateBar(this.shieldBar, dt, this.shieldRegenTime);
 	      }
-	      this.position.x += Math.sin(this.timeCount / 250) / 2;
+	      // this.position.x += Math.sin(this.timeCount / 250) / 2;
+	      this.position.x += Math.sin(this.timeCount / 200) / 2;
 	      this.timeCount += dt;
 	    }
 	  }, {
@@ -643,7 +670,6 @@
 	      return this[HEALTH];
 	    },
 	    set: function set(health) {
-	      console.log("h");
 	      this[HEALTH] = health;
 	      this.hbFill.width = this.maxHbWidth * this[HEALTH] / this.maxHealth;
 	    }
@@ -653,7 +679,6 @@
 	      return this[HEALTH];
 	    },
 	    set: function set(shield) {
-	      console.log("s");
 	      this[SHIELD] = shield;
 	      this.shieldBar.width = this.maxHbWidth * this[SHIELD] / this.maxShield;
 	    }
@@ -684,7 +709,7 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var _gravity = 0.002;
+	var _gravity = 0.0018;
 
 	var Projectile = function (_PIXI$Sprite) {
 	  _inherits(Projectile, _PIXI$Sprite);
@@ -774,6 +799,7 @@
 	exports.intersects = intersects;
 	exports.remove = remove;
 	exports.getBounds = getBounds;
+	exports.zIndexSort = zIndexSort;
 	exports.insertClip = insertClip;
 	var Direction = exports.Direction = {
 	  get Up() {
@@ -800,6 +826,12 @@
 
 	function getBounds(obj) {
 	  return new PIXI.Rectangle(obj.position.x - obj.width * obj.anchor.x, obj.position.y - obj.height * obj.anchor.y, obj.width, obj.height);
+	}
+
+	function zIndexSort(a, b) {
+	  a.zIndex = a.zIndex || 0;
+	  b.zIndex = b.zIndex || 0;
+	  return a.zIndex - b.zIndex;
 	}
 
 	function insertClip(name, container, options, destroyTime) {
@@ -844,123 +876,6 @@
 
 /***/ },
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _util = __webpack_require__(5);
-
-	var _ship = __webpack_require__(3);
-
-	var _ship2 = _interopRequireDefault(_ship);
-
-	var _data = __webpack_require__(7);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var PlayerManager = function () {
-	  function PlayerManager(shipManager) {
-	    _classCallCheck(this, PlayerManager);
-
-	    this.shipManager = shipManager;
-	    this.initPlayerShip();
-	    this.initKeyInputs();
-	  }
-
-	  _createClass(PlayerManager, [{
-	    key: 'initPlayerShip',
-	    value: function initPlayerShip() {
-	      var _this = this;
-
-	      this.playerShip = this.shipManager.createShip(_data.ShipType.Player, function () {
-	        //TODO: some kind of "YOU LOSE" text / screen
-	      });
-
-	      this.shipManager.container.on('click', function (e) {
-	        // console.log(e);
-	        console.log(e.data.originalEvent.clientX - 266, e.data.originalEvent.clientY - 373);
-	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot()) return;
-	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
-	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
-	        _this.shipManager.createMissile(start, end, _this.playerShip, _this.playerShip.missileSpeed);
-	      });
-	    }
-	  }, {
-	    key: 'refreshPlayer',
-	    value: function refreshPlayer() {
-	      this.playerShip.health = this.playerShip.maxHealth;
-	      this.playerShip.shield = this.playerShip.maxShield;
-	    }
-	  }, {
-	    key: 'initKeyInputs',
-	    value: function initKeyInputs() {
-	      var _this2 = this;
-
-	      this.keyInputStack = [_util.Direction.None];
-
-	      window.addEventListener("keydown", function (e) {
-	        if (e.code === "KeyQ") {
-	          //move the ship up
-	          if (_this2.keyInputStack.indexOf(_util.Direction.Up) === -1) {
-	            _this2.keyInputStack.push(_util.Direction.Up);
-	          }
-	        } else if (e.code === "KeyE") {
-	          //move the ship down
-	          if (_this2.keyInputStack.indexOf(_util.Direction.Down) === -1) {
-	            _this2.keyInputStack.push(_util.Direction.Down);
-	          }
-	        } else {
-	          return;
-	        }
-	        _this2.playerShip.direction = _this2.keyInputStack[_this2.keyInputStack.length - 1];
-	      });
-
-	      window.addEventListener("keyup", function (e) {
-	        var ind = 0;
-	        if (e.code === "KeyQ") {
-	          //move the ship up
-	          ind = _this2.keyInputStack.indexOf(_util.Direction.Up);
-	        } else if (e.code === "KeyE") {
-	          //move the ship down
-	          ind = _this2.keyInputStack.indexOf(_util.Direction.Down);
-	        } else if (e.code === "KeyK") {
-	          //kill all enemies (for debugging -- and feeling badass)
-	          for (var i = 0; i < _this2.shipManager.ships.length; i++) {
-	            var ship = _this2.shipManager.ships[i];
-	            if (ship.team !== _this2.playerShip.team) {
-	              ship.die();
-	              i--;
-	            }
-	          }
-	          return;
-	        } else if (e.code === "KeyP") {
-	          //toggle pacifism
-	          _data.constants.pacifism = !_data.constants.pacifism;
-	          return;
-	        } else {
-	          return;
-	        }
-	        _this2.keyInputStack.splice(ind, 1);
-	        _this2.playerShip.direction = _this2.keyInputStack[_this2.keyInputStack.length - 1];
-	      });
-	    }
-	  }]);
-
-	  return PlayerManager;
-	}();
-
-	exports.default = PlayerManager;
-
-/***/ },
-/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -968,13 +883,17 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.fontForSize = fontForSize;
 	exports.getStatsForShipType = getStatsForShipType;
 	exports.getShipsForWaveNumber = getShipsForWaveNumber;
 	exports.loadTextures = loadTextures;
 	var constants = exports.constants = {
 	  shieldRegenRate: 2,
 	  shieldDelay: 3000, //ms
-	  pacifism: false
+	  pacifism: false,
+	  boostDist: 350,
+	  maxPlayerBoostCharge: 100,
+	  playerBoostSpeed: 4
 	};
 
 	var ShipType = exports.ShipType = {
@@ -997,24 +916,31 @@
 
 	var waveData = [[ShipType.Grunt], [ShipType.Grunt], [ShipType.Brute], [ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt], [ShipType.Brute], [ShipType.Brute, ShipType.Grunt], [ShipType.Grunt], [ShipType.Elite], [ShipType.Brute, ShipType.Brute], [ShipType.Grunt, ShipType.Grunt, ShipType.Grunt], [ShipType.Grunt, ShipType.Grunt, ShipType.Brute], [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]];
 
+	function fontForSize(size) {
+	  return {
+	    font: 'Bold ' + size + 'px Geneva',
+	    fill: '#868c97'
+	  };
+	}
+
 	function getStatsForShipType(shipType) {
 	  var stats = void 0; // [maxHealth, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
 	  //aimRand is the range (up or down) around the target that the enemy may aim at
 	  switch (shipType) {
 	    case ShipType.Player:
-	      stats = [70, 1.2, 9, 'player.png', 30, 0, 2, 1000, 1000];
+	      stats = [70, 1.2, 9, 'player.png', 30, 0, 3.5, 1000, 1000];
 	      break;
 	    case ShipType.Grunt:
-	      stats = [15, 1, 5, 'grunt.png', 0, 150, 2, 1, 1100];
+	      stats = [15, 1, 5, 'grunt.png', 0, 150, 2.6, 1, 1100];
 	      break;
 	    case ShipType.Brute:
-	      stats = [25, 0.8, 14, 'brute.png', 0, 70, 1.5, 1, 1300];
+	      stats = [25, 0.8, 14, 'brute.png', 0, 70, 2.2, 1, 1300];
 	      break;
 	    case ShipType.Elite:
-	      stats = [30, 1.1, 14, 'elite.png', 15, 40, 2.5, 600, 1000];
+	      stats = [30, 1.1, 14, 'elite.png', 15, 40, 3.2, 600, 1000];
 	      break;
 	    case ShipType.Boss:
-	      stats = [200, 0.4, 32, 'boss.png', 40, 120, 1.8, 1300, 1800];
+	      stats = [200, 0.4, 32, 'boss.png', 40, 120, 2.1, 1300, 1800];
 	      break;
 	    default:
 	      throw new Error('Invalid ship type!', 'data.es6');
@@ -1059,13 +985,105 @@
 	  loader.add("assets/destruction.json");
 	  loader.add("assets/missile.png");
 	  loader.add("assets/hit.json");
+	  loader.add("assets/gauge-container.png");
 	  loader.add("assets/gauge-fill.png");
 	  loader.add("assets/gauge-full.png");
+	  loader.add("assets/you-died.png");
 	  loader.add("assets/shield.png");
 	  loader.once('complete', cb);
 	  loader.load();
 	  return loader;
 	}
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _util = __webpack_require__(5);
+
+	var _ship = __webpack_require__(3);
+
+	var _ship2 = _interopRequireDefault(_ship);
+
+	var _hudOverlay = __webpack_require__(11);
+
+	var _hudOverlay2 = _interopRequireDefault(_hudOverlay);
+
+	var _data = __webpack_require__(6);
+
+	var _mouseManager = __webpack_require__(10);
+
+	var _mouseManager2 = _interopRequireDefault(_mouseManager);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var PlayerManager = function () {
+	  function PlayerManager(shipManager) {
+	    _classCallCheck(this, PlayerManager);
+
+	    this.shipManager = shipManager;
+	    this.initPlayerShip();
+	    (0, _mouseManager2.default)(this);
+	  }
+
+	  _createClass(PlayerManager, [{
+	    key: 'initPlayerShip',
+	    value: function initPlayerShip() {
+	      var _this = this;
+
+	      this.playerShip = this.shipManager.createShip(_data.ShipType.Player, function () {
+	        (0, _hudOverlay2.default)().youDied();
+	      });
+
+	      this.shipManager.container.on('click', function (e) {
+	        if (e.data.originalEvent.offsetX < _this.shipManager.sceneSize.width / 2 || !_this.playerShip.shoot() || !_this.playerShip.parent) return;
+	        var start = new PIXI.Point(_this.playerShip.position.x + _this.playerShip.width, _this.playerShip.position.y);
+	        var end = new PIXI.Point(e.data.originalEvent.offsetX, e.data.originalEvent.offsetY);
+	        _this.shipManager.createMissile(start, end, _this.playerShip, _this.playerShip.missileSpeed);
+	      });
+	    }
+	  }, {
+	    key: 'boostPlayer',
+	    value: function boostPlayer(direction) {
+	      var _this2 = this;
+
+	      var hud = (0, _hudOverlay2.default)();
+	      if (hud.playerBoostCharge < _data.constants.maxPlayerBoostCharge) {
+	        return;
+	      }
+	      var s = this.playerShip;
+	      var y = direction === _util.Direction.Up ? Math.max(s.position.y - _data.constants.boostDist, 0) : Math.min(s.position.y + _data.constants.boostDist, this.shipManager.sceneSize.height);
+	      var v = this.playerShip.velocity;
+	      this.playerShip.velocity = 0;
+	      this.playerShip.shrunk = true;
+	      this.shipManager.container.animateToPoint(s, new PIXI.Point(s.position.x, y), function () {
+	        _this2.playerShip.shrunk = false;
+	      }, _data.constants.playerBoostSpeed //speed
+	      );
+	      hud.playerBoostCharge = 0;
+	    }
+	  }, {
+	    key: 'refreshPlayer',
+	    value: function refreshPlayer() {
+	      this.playerShip.health = this.playerShip.maxHealth;
+	      this.playerShip.shield = this.playerShip.maxShield;
+	    }
+	  }]);
+
+	  return PlayerManager;
+	}();
+
+	exports.default = PlayerManager;
 
 /***/ },
 /* 8 */
@@ -1089,7 +1107,11 @@
 
 	var _projectile2 = _interopRequireDefault(_projectile);
 
-	var _data = __webpack_require__(7);
+	var _hudOverlay = __webpack_require__(11);
+
+	var _hudOverlay2 = _interopRequireDefault(_hudOverlay);
+
+	var _data = __webpack_require__(6);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1135,6 +1157,7 @@
 	      }
 
 	      this.wave++;
+	      (0, _hudOverlay2.default)().waveNumber = this.wave;
 	    }
 	  }, {
 	    key: 'addEnemyShip',
@@ -1168,13 +1191,25 @@
 	        return;
 	      }
 	      var playerShip = this.shipManager.playerManager.playerShip;
+	      if (!playerShip.parent) {
+	        //player has died
+	        return;
+	      }
 	      var start = new PIXI.Point(ship.position.x, ship.position.y);
 	      var angle = void 0,
 	          worked = false;
 	      var rand = Math.random() * ship.aimRand * 2 - ship.aimRand;
-	      var pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
+	      var p = {
+	        position: {
+	          x: playerShip.position.x,
+	          y: playerShip.position.y + rand
+	        },
+	        width: playerShip.width,
+	        velocity: playerShip.velocity
+	      };
+	      //  let pos = new PIXI.Point(ship.position.x, ship.position.y + rand);
 	      for (var theta = Math.PI / -3; theta <= Math.PI / 3; theta += 0.001) {
-	        if (this.shotWillHit(theta, ship, playerShip, pos)) {
+	        if (this.shotWillHit(theta, ship, p, ship.position)) {
 	          angle = theta;
 	          worked = true;
 	          break;
@@ -1210,7 +1245,7 @@
 	        if (rand <= 5) ship.direction = _util.Direction.Down;else ship.direction = _util.Direction.Up;
 	      }
 	      var maxInterval = void 0; //in ms; we need to configure this so that the enemy won't stay against a wall
-	      var minInterval = 1000 / ship.speed; //slower ships should move for longer
+	      var minInterval = 100 / ship.speed; //slower ships should move for longer
 	      if (ship.direction === _util.Direction.Up) {
 	        maxInterval = ship.position.y / ship.speed;
 	      } else if (ship.direction === _util.Direction.Down) {
@@ -1220,9 +1255,10 @@
 	        maxInterval = 1000;
 	        minInterval = 500;
 	      }
+	      if (ship.position.y - ship.height / 2 < 0) ship.direction = _util.Direction.Down;else if (ship.position.y + ship.height / 2 > this.shipManager.sceneSize.height) ship.direction = _util.Direction.Up;
 	      setTimeout(function () {
 	        _this3.setNextMove(ship);
-	      }, Math.random() * maxInterval);
+	      }, Math.random() * (maxInterval + minInterval) + minInterval);
 	    }
 	  }]);
 
@@ -1262,6 +1298,7 @@
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(GameContainer).call(this));
 
 	    _this.anims = [];
+	    _this.animations = []; //this is so bad..
 	    return _this;
 	  }
 
@@ -1269,16 +1306,12 @@
 	    key: 'addChild',
 	    value: function addChild(child) {
 	      _get(Object.getPrototypeOf(GameContainer.prototype), 'addChild', this).call(this, child);
-	      this.children.sort(function (a, b) {
-	        a.zIndex = a.zIndex || 0;
-	        b.zIndex = b.zIndex || 0;
-	        return a.zIndex - b.zIndex;
-	      });
+	      this.children.sort(_util.zIndexSort);
 	    }
 	  }, {
 	    key: 'animateToPoint',
-	    value: function animateToPoint(obj, pt) {
-	      var speed = arguments.length <= 2 || arguments[2] === undefined ? 2 : arguments[2];
+	    value: function animateToPoint(obj, pt, completion) {
+	      var speed = arguments.length <= 3 || arguments[3] === undefined ? 2 : arguments[3];
 
 	      var dx = pt.x - obj.position.x;
 	      var dy = pt.y - obj.position.y;
@@ -1287,8 +1320,22 @@
 	      this.anims.push({
 	        obj: obj,
 	        velocity: { x: speed * Math.cos(theta), y: speed * Math.sin(theta) },
-	        dest: pt
+	        dest: pt,
+	        neutralY: dy === 0,
+	        neutralX: dx === 0,
+	        completion: completion
 	      });
+	    }
+	  }, {
+	    key: 'animate',
+	    value: function animate(cb) {
+	      this.anims.push(cb);
+	    }
+	  }, {
+	    key: 'remCb',
+	    value: function remCb(i) {
+	      (0, _util.remove)(this.animations, this.animations[i]);
+	      i--;
 	    }
 	  }, {
 	    key: 'update',
@@ -1297,10 +1344,44 @@
 	        var a = this.anims[i];
 	        a.obj.position.x += a.velocity.x * dt;
 	        a.obj.position.y += a.velocity.y * dt;
-	        if ((a.dest.x - a.obj.position.x) * a.velocity.x <= 0) {
+	        var xSatisfied = (a.dest.x - a.obj.position.x) * a.velocity.x <= 0 || a.neutralX;
+	        var ySatisfied = (a.dest.y - a.obj.position.y) * a.velocity.y <= 0 || a.neutralY;
+	        if (xSatisfied && ySatisfied) {
 	          a.obj.position = a.dest;
+	          if (a.completion) {
+	            a.completion();
+	          }
 	          (0, _util.remove)(this.anims, a);
 	          i--;
+	        }
+	      }
+	      for (var _i = 0; _i < this.animations.length; _i++) {
+	        this.animations[_i](dt, _i, this.remCb.bind(this));
+	      }
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+
+	      try {
+	        for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var child = _step.value;
+
+	          if (child.animateToPoint) {
+	            child.update(dt);
+	          }
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
 	        }
 	      }
 	    }
@@ -1310,6 +1391,283 @@
 	}(PIXI.Container);
 
 	exports.default = GameContainer;
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = initKeyInputs;
+
+	var _data = __webpack_require__(6);
+
+	var _util = __webpack_require__(5);
+
+	function initKeyInputs(playerManager) {
+	  playerManager.keyInputStack = [_util.Direction.None];
+
+	  window.addEventListener("keydown", function (e) {
+	    var dir = void 0;
+	    if (e.code === "KeyQ") {
+	      //move the ship up
+	      dir = _util.Direction.Up;
+	    } else if (e.code === "KeyE") {
+	      //move the ship down
+	      dir = _util.Direction.Down;
+	    } else if (e.code === "KeyA" || e.code === "KeyD") {
+	      var _dir = e.code === "KeyA" ? _util.Direction.Up : _util.Direction.Down;
+	      playerManager.boostPlayer(_dir);
+	      return;
+	    } else {
+	      return;
+	    }
+	    if (playerManager.keyInputStack.indexOf(dir) === -1) {
+	      playerManager.keyInputStack.push(dir);
+	    }
+	    playerManager.playerShip.direction = playerManager.keyInputStack[playerManager.keyInputStack.length - 1];
+	  });
+
+	  window.addEventListener("keyup", function (e) {
+	    var ind = 0;
+	    switch (e.code) {
+	      case "KeyQ":
+	        //move the ship up
+	        ind = playerManager.keyInputStack.indexOf(_util.Direction.Up);
+	        break;
+	      case "KeyE":
+	        //move the ship down
+	        ind = playerManager.keyInputStack.indexOf(_util.Direction.Down);
+	        break;
+	      case "KeyK":
+	        //kill all enemies (for debugging -- and feeling badass)
+	        for (var i = 0; i < playerManager.shipManager.ships.length; i++) {
+	          var ship = playerManager.shipManager.ships[i];
+	          if (ship.team !== playerManager.playerShip.team) {
+	            ship.die();
+	            i--;
+	          }
+	        }
+	        return;
+	      case "KeyP":
+	        //toggle pacifism
+	        _data.constants.pacifism = !_data.constants.pacifism;
+	        return;
+	      case "KeyS":
+	        //suicide
+	        playerManager.playerShip.die();
+	        return;
+	      default:
+	        return;
+	    }
+	    playerManager.keyInputStack.splice(ind, 1);
+	    playerManager.playerShip.direction = playerManager.keyInputStack[playerManager.keyInputStack.length - 1];
+	  });
+	}
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	exports.default = getDefaultOverlay;
+
+	var _gameContainer = __webpack_require__(9);
+
+	var _gameContainer2 = _interopRequireDefault(_gameContainer);
+
+	var _data = __webpack_require__(6);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var HudOverlay = function (_GameContainer) {
+	  _inherits(HudOverlay, _GameContainer);
+
+	  function HudOverlay(size) {
+	    _classCallCheck(this, HudOverlay);
+
+	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(HudOverlay).call(this));
+
+	    _this.sceneSize = size;
+	    _this.zIndex = 20;
+	    _this.initElements();
+	    return _this;
+	  }
+
+	  _createClass(HudOverlay, [{
+	    key: 'initElements',
+	    value: function initElements() {
+	      var waveLabel = new PIXI.Text("Wave 1", (0, _data.fontForSize)(24));
+	      waveLabel.anchor.set(1, 1);
+	      waveLabel.position.set(this.sceneSize.width - 20, this.sceneSize.height - 15);
+	      this.addChild(waveLabel);
+	      this.waveLabel = waveLabel;
+	      this._waveNumber = 1;
+
+	      var boostLabel = new PIXI.Text("Boost", (0, _data.fontForSize)(22));
+	      boostLabel.anchor.set(0, 1);
+	      boostLabel.position.set(20, this.sceneSize.height - 28);
+	      this.addChild(boostLabel);
+	      this.boostLabel = boostLabel;
+	      var boostBar = new PIXI.Sprite.fromFrame('assets/gauge-container.png');
+	      boostBar.anchor.set(0, 1);
+	      boostBar.position.set(30 + boostLabel.width, this.sceneSize.height - 30);
+	      var boostFill = new PIXI.Sprite.fromFrame('assets/gauge-full.png');
+	      boostFill.anchor.set(0, 1);
+	      boostFill.position.set((boostBar.width - boostFill.width) / 2, (boostBar.height - boostFill.height) / -2);
+	      boostFill.maxWidth = boostFill.width;
+	      boostBar.addChild(boostFill);
+	      this.addChild(boostBar);
+	      this.boostFill = boostFill;
+	      boostBar.alpha = 0.7;
+	    }
+	  }, {
+	    key: 'youDied',
+	    value: function youDied() {
+	      var _this2 = this;
+
+	      var youDied = new PIXI.Sprite.fromFrame('assets/you-died.png');
+	      //youDied.width = this.sceneSize.width;
+	      youDied.anchor.set(0.5, 0.5);
+	      youDied.position.set(this.sceneSize.width / 2, this.sceneSize.height / 2);
+	      youDied.maxHeight = youDied.height;
+	      youDied.height *= 0.5;
+	      youDied.alpha = 0;
+
+	      var restartText = new PIXI.Text('Click anywhere to play again', (0, _data.fontForSize)(32));
+	      restartText.anchor = new PIXI.Point(0.5, 1);
+	      restartText.position.set(this.sceneSize.width / 2, this.sceneSize.height + 200);
+	      this.addChild(restartText);
+
+	      setTimeout(function () {
+	        _this2.animations.push(function (dt, i, stopCb) {
+	          if (youDied.alpha < 1) {
+	            youDied.height += youDied.maxHeight * 0.02;
+	            youDied.alpha += 0.04;
+	          }
+	          restartText.position.y -= 0.3 * dt;
+	          if (restartText.position.y <= _this2.sceneSize.height - 40) {
+	            restartText.position.y = _this2.sceneSize.height - 40;
+	            _this2.parent.on('click', function (e) {
+	              _this2.restart();
+	            });
+	            stopCb(i);
+	          }
+	        });
+	      }, 800);
+	      this.addChild(youDied);
+	      this.removeChild(this.boostLabel);
+	      this.removeChild(this.boostFill.parent);
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(dt) {
+	      _get(Object.getPrototypeOf(HudOverlay.prototype), 'update', this).call(this, dt);
+	      this.boostFill.width += this.boostFill.maxWidth * 0.0004 * dt;
+	      if (this.boostFill.width > this.boostFill.maxWidth) {
+	        this.boostFill.width = this.boostFill.maxWidth;
+	      }
+	    }
+	  }, {
+	    key: 'waveNumber',
+	    set: function set(w) {
+	      this._waveNumber = w;
+	      this.waveLabel.text = "Wave " + w;
+	    },
+	    get: function get() {
+	      return this._waveNumber;
+	    }
+	  }, {
+	    key: 'playerBoostCharge',
+	    get: function get() {
+	      return Math.round(_data.constants.maxPlayerBoostCharge * this.boostFill.width / this.boostFill.maxWidth);
+	    },
+	    set: function set(b) {
+	      this.boostFill.width = b / _data.constants.maxPlayerBoostCharge * this.boostFill.maxWidth;
+	    }
+	  }]);
+
+	  return HudOverlay;
+	}(_gameContainer2.default);
+
+	var hudOverlay = void 0;
+
+	function getDefaultOverlay(g, replace) {
+	  if (!hudOverlay || replace) {
+	    hudOverlay = new HudOverlay(g.sceneSize);
+	    g.addChild(hudOverlay);
+	  }
+	  return hudOverlay;
+	}
+
+/***/ },
+/* 12 */,
+/* 13 */,
+/* 14 */,
+/* 15 */,
+/* 16 */,
+/* 17 */,
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.restartGame = restartGame;
+
+	var _gameContainer = __webpack_require__(9);
+
+	var _gameContainer2 = _interopRequireDefault(_gameContainer);
+
+	var _hudOverlay = __webpack_require__(11);
+
+	var _hudOverlay2 = _interopRequireDefault(_hudOverlay);
+
+	var _sceneryManager = __webpack_require__(1);
+
+	var _sceneryManager2 = _interopRequireDefault(_sceneryManager);
+
+	var _shipManager = __webpack_require__(2);
+
+	var _shipManager2 = _interopRequireDefault(_shipManager);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function restartGame() {
+	  var container = window.container;
+	  var renderer = window.renderer;
+	  container.destroy();
+	  container = new _gameContainer2.default();
+	  container.sceneSize = { width: renderer.width, height: renderer.height };
+	  container.interactive = true;
+	  var o = (0, _hudOverlay2.default)();
+	  o = null;
+
+	  window.sceneryManager = new _sceneryManager2.default(container, renderer.width, renderer.height);
+	  window.shipManager = new _shipManager2.default(container, renderer.width, renderer.height);
+
+	  window.sceneryManager.loadData(PIXI.loader.resources["assets/clouds.json"].textures);
+	}
 
 /***/ }
 /******/ ]);

@@ -3,7 +3,10 @@
 export const constants = {
   shieldRegenRate: 2,
   shieldDelay: 3000, //ms
-  pacifism: false
+  pacifism: false,
+  boostDist: 350,
+  maxPlayerBoostCharge: 100,
+  playerBoostSpeed: 4
 };
 
 export const ShipType = {
@@ -32,24 +35,31 @@ const waveData = [
   [ShipType.Elite, ShipType.Brute], [ShipType.Elite, ShipType.Elite], [ShipType.Boss]
 ];
 
+export function fontForSize(size) {
+  return {
+    font: 'Bold ' + size + 'px Geneva',
+    fill: '#868c97'
+  };
+}
+
 export function getStatsForShipType(shipType) {
   let stats;// [maxHealth, speed, damage, texturePath, maxShield, aimRand, missileSpeed, shieldRegenTime, chargeRegenTime];
   //aimRand is the range (up or down) around the target that the enemy may aim at
   switch (shipType) {
     case ShipType.Player:
-      stats  = [70, 1.2, 9, 'player.png', 30, 0, 2, 1000, 1000];
+      stats  = [70, 1.2, 9, 'player.png', 30, 0, 3.5, 1000, 1000];
       break;
     case ShipType.Grunt:
-      stats  = [15, 1, 5, 'grunt.png', 0, 150, 2, 1, 1100];
+      stats  = [15, 1, 5, 'grunt.png', 0, 150, 2.6, 1, 1100];
       break;
     case ShipType.Brute:
-      stats  = [25, 0.8, 14, 'brute.png', 0, 70, 1.5, 1, 1300];
+      stats  = [25, 0.8, 14, 'brute.png', 0, 70, 2.2, 1, 1300];
       break;
     case ShipType.Elite:
-      stats  = [30, 1.1, 14, 'elite.png', 15, 40, 2.5, 600, 1000];
+      stats  = [30, 1.1, 14, 'elite.png', 15, 40, 3.2, 600, 1000];
       break;
     case ShipType.Boss:
-      stats  = [200, 0.4, 32, 'boss.png', 40, 120, 1.8, 1300, 1800];
+      stats  = [200, 0.4, 32, 'boss.png', 40, 120, 2.1, 1300, 1800];
       break;
     default:
       throw new Error('Invalid ship type!', 'data.es6');
@@ -94,8 +104,10 @@ export function loadTextures(cb) {
   loader.add("assets/destruction.json");
   loader.add("assets/missile.png");
   loader.add("assets/hit.json");
+  loader.add("assets/gauge-container.png");
   loader.add("assets/gauge-fill.png");
   loader.add("assets/gauge-full.png");
+  loader.add("assets/you-died.png");
   loader.add("assets/shield.png");
   loader.once('complete', cb);
   loader.load();

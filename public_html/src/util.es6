@@ -23,6 +23,12 @@ export function getBounds(obj) {
   );
 }
 
+export function zIndexSort(a,b) {
+    a.zIndex = a.zIndex || 0;
+    b.zIndex = b.zIndex || 0;
+    return a.zIndex - b.zIndex;
+}
+
 export function insertClip(name, container, options, destroyTime) {
   //name doesn't include the assets/ part, but does include extension
   //options is a set of k/v pairs to be set on the clip object
